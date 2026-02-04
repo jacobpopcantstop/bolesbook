@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Hierarchy of Life: Slide Edition</title>
+    
+    <!-- React and ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <!-- Google Font: Fredoka (Rounded, Cute) -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #F0F9FF;
+            color: #334155;
+            overflow: hidden;
+            font-family: 'Fredoka', sans-serif;
+            touch-action: manipulation;
+        }
+
+        /* Animated Background Pattern */
+        .pattern-bg {
+            background-image: radial-gradient(#bae6fd 2px, transparent 2px);
+            background-size: 30px 30px;
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: -1;
+            opacity: 0.6;
+            animation: bgScroll 60s linear infinite;
+        }
+
+        @keyframes bgScroll {
+            from { background-position: 0 0; }
+            to { background-position: 60px 60px; }
+        }
+
+        /* Card Animation Styles */
+        .card-container {
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        .fade-enter {
+            opacity: 0;
+            transform: scale(0.9) translateY(20px);
+        }
+        .fade-enter-active {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .fade-exit {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+        .fade-exit-active {
+            opacity: 0;
+            transform: scale(1.1) translateY(-20px);
+            transition: all 0.3s ease-out;
+            position: absolute;
+        }
+
+        /* Icon Float Animation */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(2deg); }
+        }
+        .animate-float {
+            animation: float 5s ease-in-out infinite;
+        }
+
+        /* Progress Bar Transition */
+        .progress-bar {
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const HIERARCHY = [
+            { id: 'atom', name: 'Atom', color: 'bg-blue-100 text-blue-600 border-blue-200', icon: '⚛️', simpleDesc: 'The tiniest Lego brick of the universe! Everything you touch is made of atoms.', detail: '0.1 nm' },
+            { id: 'molecule', name: 'Molecule', color: 'bg-indigo-100 text-indigo-600 border-indigo-200', icon: '💧', simpleDesc: 'A group of atoms bonded together. Water (H₂O) is a molecule made of Hydrogen and Oxygen.', detail: '1 nm' },
+            { id: 'macromolecule', name: 'Macromolecule', color: 'bg-purple-100 text-purple-600 border-purple-200', icon: '🧬', simpleDesc: 'Giant molecules like DNA. They act like an instruction manual for building your body.', detail: '10 nm' },
+            { id: 'organelle', name: 'Organelle', color: 'bg-pink-100 text-pink-600 border-pink-200', icon: '🔋', simpleDesc: 'Tiny workers inside a cell. For example, mitochondria are like batteries that give the cell energy.', detail: '1 µm' },
+            { id: 'cell', name: 'Cell', color: 'bg-green-100 text-green-600 border-green-200', icon: '🦠', simpleDesc: 'The smallest living building block of YOU. Your body is built from trillions of them!', detail: '10-100 µm' },
+            { id: 'tissue', name: 'Tissue', color: 'bg-red-100 text-red-600 border-red-200', icon: '🧶', simpleDesc: 'A team of cells working together. Muscles are a type of tissue that helps you move.', detail: '1 mm' },
+            { id: 'organ', name: 'Organ', color: 'bg-orange-100 text-orange-600 border-orange-200', icon: '🫀', simpleDesc: 'A body part made of different tissues that does a big job, like your heart pumping blood.', detail: '10 cm' },
+            { id: 'organsystem', name: 'Organ System', color: 'bg-yellow-100 text-yellow-600 border-yellow-200', icon: '🦴', simpleDesc: 'A team of organs working together. Your skeleton is a system that holds you up!', detail: '1 m' },
+            { id: 'organism', name: 'Organism', color: 'bg-teal-100 text-teal-600 border-teal-200', icon: '🧒', simpleDesc: 'A complete living thing. You, a dog, a tree, and a mushroom are all organisms.', detail: '1.7 m' },
+            { id: 'population', name: 'Population', color: 'bg-cyan-100 text-cyan-600 border-cyan-200', icon: '👨‍👩‍👧‍👦', simpleDesc: 'A group of the exact same kind of animal living in one place.', detail: '100 m' },
+            { id: 'community', name: 'Community', color: 'bg-sky-100 text-sky-600 border-sky-200', icon: '🏡', simpleDesc: 'All the different animals and plants living together in a neighborhood.', detail: '1 km' },
+            { id: 'ecosystem', name: 'Ecosystem', color: 'bg-emerald-100 text-emerald-600 border-emerald-200', icon: '🌲', simpleDesc: 'Living things plus the non-living things (like rocks, water, and air) in an area.', detail: '50 km' },
+            { id: 'biome', name: 'Biome', color: 'bg-amber-100 text-amber-600 border-amber-200', icon: '🏜️', simpleDesc: 'A huge area of the world with specific weather, like a hot Desert or a cold Tundra.', detail: '1000 km' },
+            { id: 'biosphere', name: 'Biosphere', color: 'bg-blue-100 text-blue-600 border-blue-200', icon: '🌍', simpleDesc: 'Our entire Planet Earth and everywhere life exists on it!', detail: '12,742 km' }
+        ];
+
+        const App = () => {
+            const [index, setIndex] = useState(0);
+            const [direction, setDirection] = useState(0); // -1 for prev, 1 for next
+
+            const nextSlide = () => {
+                if (index < HIERARCHY.length - 1) {
+                    setDirection(1);
+                    setIndex(i => i + 1);
+                }
+            };
+
+            const prevSlide = () => {
+                if (index > 0) {
+                    setDirection(-1);
+                    setIndex(i => i - 1);
+                }
+            };
+
+            // Keyboard Support
+            useEffect(() => {
+                const handleKeyDown = (e) => {
+                    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+                        nextSlide();
+                    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                        prevSlide();
+                    }
+                };
+                window.addEventListener('keydown', handleKeyDown);
+                return () => window.removeEventListener('keydown', handleKeyDown);
+            }, [index]);
+
+            const activeItem = HIERARCHY[index];
+            const progress = ((index + 1) / HIERARCHY.length) * 100;
+
+            return (
+                <div className="h-screen w-screen relative flex flex-col items-center justify-center p-4">
+                    <div className="pattern-bg"></div>
+
+                    {/* Header */}
+                    <div className="absolute top-0 w-full p-6 text-center z-10">
+                        <h1 className="text-3xl md:text-4xl font-black text-slate-700 tracking-tight">
+                            <span className="text-blue-400">Hierarchy</span> of <span className="text-pink-400">Life</span>
+                        </h1>
+                        <p className="text-slate-400 font-bold mt-1 text-sm tracking-wide">LEVEL {index + 1} OF {HIERARCHY.length}</p>
+                    </div>
+
+                    {/* Main Card */}
+                    <div className="relative w-full max-w-md aspect-[4/5] md:aspect-[4/3] flex items-center justify-center">
+                        {/* We use a key based on index to trigger animations on change */}
+                        <div 
+                            key={index}
+                            className={`
+                                absolute inset-0 bg-white rounded-3xl shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)] 
+                                border-4 border-white flex flex-col items-center p-8 text-center
+                                transform transition-all duration-500 ease-out animate-enter
+                            `}
+                        >
+                            {/* Top Badge */}
+                            <div className={`inline-block px-4 py-1.5 rounded-full font-bold text-sm mb-6 ${activeItem.color}`}>
+                                Size: {activeItem.detail}
+                            </div>
+
+                            {/* Icon */}
+                            <div className="flex-grow flex items-center justify-center mb-4">
+                                <div className="text-[120px] md:text-[150px] animate-float filter drop-shadow-xl select-none">
+                                    {activeItem.icon}
+                                </div>
+                            </div>
+
+                            {/* Text Content */}
+                            <div className="mt-auto">
+                                <h2 className="text-4xl md:text-5xl font-black text-slate-700 mb-3 tracking-tight">
+                                    {activeItem.name}
+                                </h2>
+                                <p className="text-lg md:text-xl text-slate-500 font-medium leading-relaxed">
+                                    {activeItem.simpleDesc}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Controls Footer */}
+                    <div className="fixed bottom-0 w-full max-w-2xl p-6 md:mb-4 z-20">
+                        {/* Progress Bar */}
+                        <div className="w-full h-3 bg-white/50 rounded-full mb-6 overflow-hidden backdrop-blur-sm border border-white/50">
+                            <div 
+                                className="h-full bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 progress-bar"
+                                style={{ width: `${progress}%` }}
+                            ></div>
+                        </div>
+
+                        {/* Navigation Buttons */}
+                        <div className="flex justify-between items-center gap-4">
+                            <button 
+                                onClick={prevSlide}
+                                disabled={index === 0}
+                                className={`
+                                    flex-1 py-4 rounded-2xl font-bold text-xl flex items-center justify-center gap-2 transition-all transform active:scale-95 shadow-lg
+                                    ${index === 0 
+                                        ? 'bg-slate-100 text-slate-300 cursor-not-allowed' 
+                                        : 'bg-white text-slate-600 hover:bg-slate-50 hover:text-blue-500'
+                                    }
+                                `}
+                            >
+                                <i className="ph-bold ph-caret-left"></i>
+                                Back
+                            </button>
+
+                            <button 
+                                onClick={nextSlide}
+                                disabled={index === HIERARCHY.length - 1}
+                                className={`
+                                    flex-[2] py-4 rounded-2xl font-bold text-xl flex items-center justify-center gap-2 transition-all transform active:scale-95 shadow-lg shadow-blue-200/50
+                                    ${index === HIERARCHY.length - 1 
+                                        ? 'bg-slate-100 text-slate-300 cursor-not-allowed' 
+                                        : 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:from-blue-600 hover:to-indigo-600'
+                                    }
+                                `}
+                            >
+                                {index === HIERARCHY.length - 1 ? 'Finished!' : 'Next Level'}
+                                {index !== HIERARCHY.length - 1 && <i className="ph-bold ph-caret-right"></i>}
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Keyboard Hint */}
+                    <div className="hidden md:block fixed bottom-4 right-6 text-slate-300 font-bold text-xs select-none">
+                        Use Arrow Keys to Navigate
+                    </div>
+
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

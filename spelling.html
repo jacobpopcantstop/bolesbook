@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spelling Master</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap');
+
+        /* CSS Variables for Themes */
+        :root {
+            --bg-gradient: linear-gradient(-45deg, #FF9A9E, #FECFEF, #E0C3FC, #8EC5FC);
+            --glass-bg: rgba(255, 255, 255, 0.85);
+            --glass-border: 1px solid rgba(255, 255, 255, 0.6);
+            --text-primary: #1f2937;
+            --text-secondary: #4b5563;
+            --card-bg: rgba(255, 255, 255, 0.5);
+            --input-bg: rgba(255, 255, 255, 0.8);
+            --input-text: #1f2937;
+            --input-border: #e5e7eb;
+            --button-bg: #ffffff;
+            --icon-color: #6366f1;
+        }
+
+        body.dark-mode {
+            --bg-gradient: linear-gradient(-45deg, #0f172a, #312e81, #4c1d95, #1e1b4b);
+            --glass-bg: rgba(17, 24, 39, 0.75);
+            --glass-border: 1px solid rgba(255, 255, 255, 0.1);
+            --text-primary: #f3f4f6;
+            --text-secondary: #d1d5db;
+            --card-bg: rgba(30, 41, 59, 0.4);
+            --input-bg: rgba(0, 0, 0, 0.3);
+            --input-text: #ffffff;
+            --input-border: rgba(255, 255, 255, 0.1);
+            --button-bg: rgba(30, 41, 59, 0.8);
+            --icon-color: #818cf8;
+        }
+
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: var(--bg-gradient);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            min-height: 100vh;
+            overflow: hidden;
+            transition: background 0.5s ease;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 30px;
+            border: var(--glass-border);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1), 0 4px 10px rgba(0,0,0,0.05);
+            transition: background 0.3s, border 0.3s;
+        }
+
+        /* Text Color Overrides for Dark Mode Support */
+        .theme-text-primary { color: var(--text-primary); transition: color 0.3s; }
+        .theme-text-secondary { color: var(--text-secondary); transition: color 0.3s; }
+        .theme-card-bg { background-color: var(--card-bg); transition: background-color 0.3s; }
+        .theme-button-bg { background-color: var(--button-bg); transition: background-color 0.3s; }
+        .theme-icon-color { color: var(--icon-color); transition: color 0.3s; }
+
+        .btn-push {
+            transition: all 0.1s;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.15);
+            transform: translateY(0);
+        }
+        .btn-push:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 rgba(0,0,0,0.15);
+        }
+
+        .shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        .pulse-focus:focus {
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+        }
+        
+        .progress-bar-container {
+            background: rgba(0,0,0,0.1);
+        }
+        .progress-bar-fill {
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            background: linear-gradient(90deg, #6366f1, #8b5cf6);
+        }
+
+        /* Custom Input Styles */
+        #user-input {
+            background-color: var(--input-bg);
+            color: var(--input-text);
+            border-color: var(--input-border);
+        }
+        #user-input::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center p-4 selection:bg-purple-200 selection:text-purple-900">
+
+    <!-- Theme Toggle -->
+    <button onclick="toggleTheme()" class="fixed top-4 right-4 z-50 p-3 rounded-full theme-button-bg shadow-lg hover:scale-110 transition-transform cursor-pointer group">
+        <i id="theme-icon" class="fas fa-moon text-xl theme-icon-color"></i>
+    </button>
+
+    <!-- Main Container -->
+    <div id="app" class="glass-panel w-full max-w-md relative overflow-hidden transition-all duration-300 flex flex-col min-h-[500px]">
+        
+        <!-- Progress Bar (Fixed at top) -->
+        <div class="w-full h-3 progress-bar-container">
+            <div id="progress-bar" class="h-full progress-bar-fill" style="width: 0%"></div>
+        </div>
+
+        <div class="p-8 flex-1 flex flex-col justify-center">
+
+            <!-- START SCREEN -->
+            <div id="start-screen" class="text-center py-4">
+                <div class="mb-8 inline-flex items-center justify-center w-28 h-28 rounded-full theme-button-bg shadow-lg theme-icon-color animate-[bounce_2s_infinite]">
+                    <i class="fas fa-spell-check text-5xl"></i>
+                </div>
+                <h1 class="text-4xl font-bold theme-text-primary mb-3 tracking-tight">Spelling Bee</h1>
+                <p class="theme-text-secondary mb-10 text-lg">Master your 10 words.</p>
+                <button onclick="startGame()" class="btn-push w-full bg-indigo-600 hover:bg-indigo-700 text-white text-xl font-bold py-5 px-6 rounded-2xl shadow-lg">
+                    Start Learning
+                </button>
+            </div>
+
+            <!-- GAME SCREEN -->
+            <div id="game-screen" class="hidden h-full flex flex-col">
+                <!-- Header Stats -->
+                <div class="flex justify-between items-center mb-8 px-2">
+                    <div class="flex items-center space-x-2 theme-card-bg px-4 py-2 rounded-full shadow-sm">
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <span id="score-display" class="text-lg font-bold theme-text-primary">0</span>
+                    </div>
+                    <div class="flex items-center space-x-2 theme-card-bg px-4 py-2 rounded-full shadow-sm">
+                        <i class="fas fa-fire text-orange-500"></i>
+                        <span id="streak-display" class="text-lg font-bold theme-text-primary">0</span>
+                    </div>
+                </div>
+
+                <!-- Audio Trigger -->
+                <div class="text-center mb-8 flex-1 flex items-center justify-center">
+                    <button onclick="playCurrentWord()" class="btn-push group relative inline-flex items-center justify-center w-40 h-40 rounded-full theme-button-bg shadow-md border-4 border-indigo-50/10 hover:border-indigo-100/30 transition-colors">
+                        <i class="fas fa-volume-up text-6xl theme-icon-color group-hover:scale-110 transition-transform"></i>
+                        <span class="absolute -bottom-10 text-sm theme-text-secondary font-semibold tracking-wide">TAP TO LISTEN</span>
+                    </button>
+                </div>
+
+                <!-- Input Area -->
+                <div class="relative mb-6">
+                    <input type="text" id="user-input" 
+                        class="pulse-focus w-full text-center text-4xl font-bold border-2 rounded-2xl outline-none py-5 transition-all uppercase"
+                        placeholder="TYPE HERE" autocomplete="off" spellcheck="false">
+                    
+                    <!-- Feedback Container -->
+                    <div id="feedback-message" class="absolute w-full text-center -bottom-10 text-lg font-bold h-8 transition-all duration-300 opacity-0 transform translate-y-2"></div>
+                </div>
+
+                <!-- Controls -->
+                <button id="submit-btn" onclick="checkAnswer()" class="btn-push w-full mt-6 bg-gray-800 hover:bg-gray-900 text-white font-bold py-4 px-6 rounded-2xl shadow-lg text-lg">
+                    Check Spelling
+                </button>
+            </div>
+
+            <!-- END SCREEN -->
+            <div id="end-screen" class="hidden text-center py-4">
+                <div class="mb-8 inline-flex items-center justify-center w-32 h-32 rounded-full bg-yellow-100 text-yellow-500 shadow-inner">
+                    <i class="fas fa-trophy text-5xl"></i>
+                </div>
+                <h2 class="text-3xl font-bold theme-text-primary mb-2">Quiz Complete!</h2>
+                <p class="theme-text-secondary mb-8 text-lg">Great job practicing.</p>
+                
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="theme-button-bg p-5 rounded-2xl shadow-sm border border-white/10">
+                        <div class="text-3xl font-bold text-indigo-500" id="final-score">0</div>
+                        <div class="text-xs theme-text-secondary font-bold uppercase tracking-wider mt-1">Total Score</div>
+                    </div>
+                    <div class="theme-button-bg p-5 rounded-2xl shadow-sm border border-white/10">
+                        <div class="text-3xl font-bold text-orange-500" id="final-streak">0</div>
+                        <div class="text-xs theme-text-secondary font-bold uppercase tracking-wider mt-1">Best Streak</div>
+                    </div>
+                </div>
+
+                <!-- Wrong Words Display -->
+                <div id="wrong-words-container" class="mb-8 hidden">
+                    <h3 class="text-lg font-bold text-red-400 mb-3">Needs Practice:</h3>
+                    <div id="wrong-words-list" class="flex flex-wrap justify-center gap-2">
+                        <!-- Words injected here -->
+                    </div>
+                </div>
+                
+                <div id="perfect-score-message" class="mb-8 hidden">
+                    <p class="text-lg font-bold text-green-500">🎉 Perfect Score! You're a wizard! 🎉</p>
+                </div>
+
+                <button onclick="restartGame()" class="btn-push w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-6 rounded-2xl shadow-lg">
+                    Play Again
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // The Data
+        const words = [
+            "peak", "rescue", "cheap", "flame", "treat", 
+            "strain", "might", "weigh", "float", "neighbor"
+        ];
+
+        const wordSentences = {
+            "peak": [
+                "The climbers reached the snowy peak.",
+                "Traffic reaches its peak at 5 PM.",
+                "He is at the peak of his career.",
+                "The mountain peak was hidden by clouds.",
+                "Athletes strive for peak performance."
+            ],
+            "rescue": [
+                "Firefighters came to the rescue immediately.",
+                "We need to rescue the cat from the tree.",
+                "The rescue boat saved the sailors.",
+                "He tried to rescue his dropped phone.",
+                "She works at an animal rescue center."
+            ],
+            "cheap": [
+                "Vegetables are cheap at the market.",
+                "The toy broke because it was cheap.",
+                "I bought a cheap ticket for the movie.",
+                "Talk is cheap, show me results.",
+                "He stays in cheap hotels to save money."
+            ],
+            "flame": [
+                "The candle flame flickered in the wind.",
+                "A small flame can start a large fire.",
+                "The flame turned blue then orange.",
+                "Keep the flame away from the paper.",
+                "She watched the flame dance on the wick."
+            ],
+            "treat": [
+                "I will treat you to dinner tonight.",
+                "The doctor will treat your injury.",
+                "Ice cream is a delicious summer treat.",
+                "Please treat others with respect.",
+                "My dog loves a tasty treat."
+            ],
+            "strain": [
+                "Do not strain your eyes in the dark.",
+                "The heavy box put a strain on his back.",
+                "He felt a strain in his leg muscle.",
+                "Strain the pasta before serving it.",
+                "The news put a strain on their friendship."
+            ],
+            "might": [
+                "It might rain later this afternoon.",
+                "She pushed the door with all her might.",
+                "I might go to the park tomorrow.",
+                "He tried with all his might to win.",
+                "You might want to wear a coat."
+            ],
+            "weigh": [
+                "Please weigh the fruit on the scale.",
+                "How much does this suitcase weigh.",
+                "I need to weigh my options carefully.",
+                "Does a pound of lead weigh more than feathers.",
+                "The doctor will weigh the baby now."
+            ],
+            "float": [
+                "A cork will float on the water.",
+                "I watched the balloon float away.",
+                "Can you float on your back?",
+                "Ice cubes float in the glass.",
+                "Leaves float gently down the stream."
+            ],
+            "neighbor": [
+                "My neighbor watered my plants for me.",
+                "Please be a quiet neighbor at night.",
+                "Our new neighbor moved in yesterday.",
+                "I borrowed sugar from my neighbor.",
+                "The neighbor's dog barks at cars."
+            ]
+        };
+
+        // State
+        let gameWords = [];
+        let incorrectWords = []; // New state to track wrong words
+        let currentIndex = 0;
+        let score = 0;
+        let streak = 0;
+        let maxStreak = 0;
+        let attempts = 0; // NEW: Track attempts per word
+        let isProcessing = false;
+        let isDarkMode = false;
+
+        // Elements
+        const screens = {
+            start: document.getElementById('start-screen'),
+            game: document.getElementById('game-screen'),
+            end: document.getElementById('end-screen')
+        };
+        const displays = {
+            score: document.getElementById('score-display'),
+            streak: document.getElementById('streak-display'),
+            progress: document.getElementById('progress-bar'),
+            finalScore: document.getElementById('final-score'),
+            finalStreak: document.getElementById('final-streak'),
+            feedback: document.getElementById('feedback-message'),
+            wrongWordsContainer: document.getElementById('wrong-words-container'),
+            wrongWordsList: document.getElementById('wrong-words-list'),
+            perfectMessage: document.getElementById('perfect-score-message')
+        };
+        const input = document.getElementById('user-input');
+        const submitBtn = document.getElementById('submit-btn');
+
+        // Theme Toggle Logic
+        function toggleTheme() {
+            isDarkMode = !isDarkMode;
+            document.body.classList.toggle('dark-mode');
+            const icon = document.getElementById('theme-icon');
+            
+            if (isDarkMode) {
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+            } else {
+                icon.classList.remove('fa-sun');
+                icon.classList.add('fa-moon');
+            }
+        }
+
+        // Init Speech Synthesis
+        const synth = window.speechSynthesis;
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playCorrectSound() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(600, audioCtx.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+            gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.5);
+        }
+
+        function playIncorrectSound() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.type = 'sawtooth';
+            oscillator.frequency.setValueAtTime(150, audioCtx.currentTime);
+            oscillator.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.3);
+            gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.3);
+        }
+
+        // Utils
+        function shuffle(array) {
+            return array.sort(() => Math.random() - 0.5);
+        }
+
+        function switchScreen(screenName) {
+            Object.values(screens).forEach(el => el.classList.add('hidden'));
+            screens[screenName].classList.remove('hidden');
+        }
+
+        function updateStats() {
+            displays.score.textContent = score;
+            displays.streak.textContent = streak;
+            const progress = (currentIndex / gameWords.length) * 100;
+            displays.progress.style.width = `${progress}%`;
+        }
+
+        // Game Logic
+        function startGame() {
+            const utterance = new SpeechSynthesisUtterance('');
+            synth.speak(utterance);
+            gameWords = shuffle([...words]);
+            incorrectWords = []; // Reset tracked words
+            currentIndex = 0;
+            score = 0;
+            streak = 0;
+            maxStreak = 0;
+            switchScreen('game');
+            updateStats();
+            setTimeout(() => loadWord(), 500);
+        }
+
+        function loadWord() {
+            attempts = 0; // Reset attempts for new word
+            input.value = '';
+            
+            // Re-enable controls
+            input.disabled = false;
+            submitBtn.disabled = false;
+
+            input.focus();
+            input.classList.remove('text-green-600', 'text-red-500', 'text-yellow-600', 'border-green-500', 'border-red-500', 'border-yellow-500');
+            
+            // Re-apply theme border color or default
+            input.style.borderColor = ''; // Let CSS var take over or class
+            
+            displays.feedback.textContent = '';
+            displays.feedback.classList.remove('opacity-100', 'translate-y-0');
+            displays.feedback.classList.add('opacity-0', 'translate-y-2');
+            
+            submitBtn.textContent = "Check Spelling";
+            submitBtn.className = "btn-push w-full mt-6 bg-gray-800 hover:bg-gray-900 text-white font-bold py-4 px-6 rounded-2xl shadow-lg text-lg";
+            
+            isProcessing = false;
+            playCurrentWord();
+        }
+
+        function playCurrentWord() {
+            if (currentIndex >= gameWords.length) return;
+            synth.cancel();
+            const word = gameWords[currentIndex];
+            
+            const wordUtterance = new SpeechSynthesisUtterance(word);
+            wordUtterance.rate = 0.8; 
+            wordUtterance.pitch = 1;
+            wordUtterance.lang = 'en-US';
+            
+            const possibleSentences = wordSentences[word] || ["Spell the word " + word];
+            const randomSentence = possibleSentences[Math.floor(Math.random() * possibleSentences.length)];
+            
+            const sentenceUtterance = new SpeechSynthesisUtterance(randomSentence);
+            sentenceUtterance.rate = 0.9;
+            sentenceUtterance.pitch = 1;
+            sentenceUtterance.lang = 'en-US';
+
+            synth.speak(wordUtterance);
+            synth.speak(sentenceUtterance);
+            input.focus();
+        }
+
+        function checkAnswer() {
+            if (isProcessing) return;
+            const userSpelling = input.value.trim().toLowerCase();
+            const correctSpelling = gameWords[currentIndex].toLowerCase();
+            
+            if (!userSpelling) {
+                // Simple shake logic
+                const app = document.getElementById('app');
+                app.classList.remove('shake');
+                void app.offsetWidth;
+                app.classList.add('shake');
+                return;
+            }
+
+            isProcessing = true;
+            if (userSpelling === correctSpelling) {
+                if (attempts === 0) {
+                    handleCorrect();
+                } else {
+                    handlePartialCorrect();
+                }
+            } else {
+                attempts++;
+                if (attempts >= 2) {
+                    handleFinalIncorrect(correctSpelling);
+                } else {
+                    handleFirstIncorrect();
+                }
+            }
+        }
+
+        function handleCorrect() {
+            playCorrectSound();
+            score += 10 + (streak * 2);
+            streak++;
+            if (streak > maxStreak) maxStreak = streak;
+            
+            input.classList.add('text-green-600', 'border-green-500');
+            input.style.borderColor = '#10b981';
+
+            submitBtn.className = "btn-push w-full mt-6 bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-6 rounded-2xl shadow-lg text-lg";
+            submitBtn.textContent = "Correct!";
+            
+            triggerConfetti();
+            updateStats();
+            setTimeout(() => nextWord(), 1200);
+        }
+
+        function handlePartialCorrect() {
+            playCorrectSound();
+            score += 5; // Half points for retry
+            // Streak does not increment, but also doesn't reset further (it reset on the first miss)
+            
+            // Remove error classes if present
+            input.classList.remove('text-red-500', 'border-red-500', 'text-green-600', 'border-green-500');
+            
+            // Add Yellow/Orange classes
+            input.classList.add('text-yellow-600', 'border-yellow-500');
+            input.style.borderColor = '#eab308'; // Tailwind yellow-500
+
+            submitBtn.className = "btn-push w-full mt-6 bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-4 px-6 rounded-2xl shadow-lg text-lg";
+            submitBtn.textContent = "Partial Credit";
+            
+            displays.feedback.textContent = "Saved it!";
+            displays.feedback.classList.remove('opacity-0', 'translate-y-2');
+            displays.feedback.classList.add('text-yellow-600', 'opacity-100', 'translate-y-0');
+
+            triggerConfetti(); // Maybe less confetti?
+            updateStats();
+            setTimeout(() => nextWord(), 1200);
+        }
+
+        function handleFirstIncorrect() {
+            playIncorrectSound();
+            streak = 0; // Break streak immediately
+            updateStats();
+
+            const app = document.getElementById('app');
+            app.classList.remove('shake');
+            void app.offsetWidth;
+            app.classList.add('shake');
+
+            // Visual feedback for retry - using Yellow to warn
+            input.classList.add('border-yellow-500', 'text-yellow-600');
+            input.style.borderColor = '#eab308';
+            
+            submitBtn.className = "btn-push w-full mt-6 bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-4 px-6 rounded-2xl shadow-lg text-lg";
+            submitBtn.textContent = "Try Again!";
+            
+            displays.feedback.textContent = "Oops! Try one more time.";
+            displays.feedback.classList.remove('opacity-0', 'translate-y-2');
+            displays.feedback.classList.add('text-yellow-600', 'opacity-100', 'translate-y-0');
+
+            // Let them try again after a brief pause
+            setTimeout(() => {
+                isProcessing = false;
+                input.value = ''; // Clear input to force re-typing
+                input.focus();
+            }, 1000);
+        }
+
+        function handleFinalIncorrect(correctWord) {
+            playIncorrectSound();
+            streak = 0;
+            updateStats();
+            
+            // Disable controls to prevent typing during delay
+            input.disabled = true;
+            submitBtn.disabled = true;
+            
+            // Add to tracked list if not already there
+            if (!incorrectWords.includes(correctWord)) {
+                incorrectWords.push(correctWord);
+            }
+
+            const app = document.getElementById('app');
+            app.classList.remove('shake');
+            void app.offsetWidth;
+            app.classList.add('shake');
+
+            input.classList.remove('text-yellow-600', 'border-yellow-500');
+            input.classList.add('text-red-500', 'border-red-500');
+            // Force border color override
+            input.style.borderColor = '#ef4444';
+
+            submitBtn.className = "btn-push w-full mt-6 bg-red-500 hover:bg-red-600 text-white font-bold py-4 px-6 rounded-2xl shadow-lg text-lg";
+            submitBtn.textContent = "Incorrect";
+            
+            displays.feedback.textContent = `Correct: ${correctWord.toUpperCase()}`;
+            displays.feedback.classList.remove('text-yellow-600');
+            displays.feedback.classList.add('text-red-500', 'opacity-100', 'translate-y-0');
+
+            const utterance = new SpeechSynthesisUtterance(`The correct spelling is ${correctWord.split('').join(' ')}`);
+            utterance.rate = 0.7;
+            synth.speak(utterance);
+            
+            setTimeout(() => nextWord(), 6000); 
+        }
+
+        function nextWord() {
+            currentIndex++;
+            if (currentIndex < gameWords.length) {
+                loadWord();
+                updateStats();
+            } else {
+                endGame();
+            }
+        }
+
+        function endGame() {
+            displays.finalScore.textContent = score;
+            displays.finalStreak.textContent = maxStreak;
+            displays.progress.style.width = `100%`;
+            
+            // Handle Wrong Words List
+            displays.wrongWordsList.innerHTML = '';
+            if (incorrectWords.length > 0) {
+                displays.wrongWordsContainer.classList.remove('hidden');
+                displays.perfectMessage.classList.add('hidden');
+                
+                incorrectWords.forEach(word => {
+                    const badge = document.createElement('span');
+                    badge.className = 'px-3 py-1 bg-red-100 text-red-600 rounded-full text-sm font-semibold border border-red-200 uppercase';
+                    badge.textContent = word;
+                    displays.wrongWordsList.appendChild(badge);
+                });
+            } else {
+                displays.wrongWordsContainer.classList.add('hidden');
+                displays.perfectMessage.classList.remove('hidden');
+            }
+
+            setTimeout(() => {
+                switchScreen('end');
+                if (score === gameWords.length * 10 + (maxStreak > 0 ? 50 : 0)) {
+                    triggerConfetti(); 
+                    setTimeout(triggerConfetti, 500);
+                }
+            }, 500);
+        }
+
+        function restartGame() {
+            startGame();
+        }
+
+        function triggerConfetti() {
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 },
+                colors: ['#6366f1', '#8b5cf6', '#ec4899', '#10b981']
+            });
+        }
+
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') checkAnswer();
+        });
+    </script>
+</body>
+</html>

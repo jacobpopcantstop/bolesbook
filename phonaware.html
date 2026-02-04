@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AyBo: Phonological Awareness Tracker V2</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #fafaf9; /* stone-50 */
+        }
+        
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 280px;
+        }
+
+        .trial-card {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-correct.active {
+            background-color: #059669;
+            color: white;
+            border-color: #059669;
+            box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);
+        }
+
+        .btn-incorrect.active {
+            background-color: #dc2626;
+            color: white;
+            border-color: #dc2626;
+            box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.2);
+        }
+
+        .progress-stepper {
+            display: flex;
+            gap: 4px;
+        }
+
+        .step-dot {
+            height: 6px;
+            flex: 1;
+            border-radius: 3px;
+            background-color: #e7e5e4;
+            transition: background-color 0.3s ease;
+        }
+
+        .step-dot.completed { background-color: #10b981; }
+        .step-dot.failed { background-color: #ef4444; }
+    </style>
+
+    <!-- Chosen Palette: Professional Clinical Slate & Emerald 
+         Background: Stone-50 (#fafaf9)
+         Primary: Emerald-600 (#10b981) for Success
+         Secondary: Slate-700 (#334155) for Text/Structure
+         Accent: Sky-500 (#0ea5e9) for informational highlights
+    -->
+
+    <!-- Application Structure Plan:
+         - Top: Goal Banner with Progress Stepper (Visualizes total session completion).
+         - Left (60%): Assessment Core - Thematic grouping of Matching vs. Deletion tasks with clear sound-position badges.
+         - Right (40%): The "Insight Engine" - Real-time donut chart for current session, a Skill Radar/Bar chart for domain comparison, and the 6-week trend.
+         - Why: This layout prioritizes the teacher's workflow (Top-Down, Left-to-Right) while ensuring metrics are always in the peripheral vision.
+    -->
+
+    <!-- Visualization & Content Choices:
+         - Skill Comparison -> Goal: Identify specific weakness -> Method: Horizontal Bar Chart -> Interaction: Dynamic update. Justification: Clearly distinguishes if Matching or Deletion is the hurdle.
+         - Progress Trend -> Goal: Longitudinal Tracking -> Method: Area Chart -> Interaction: Hover for trial counts. Justification: Shaded area shows the "Gap to Goal".
+         - CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
+    -->
+</head>
+<body class="text-slate-900">
+
+    <!-- Header Navigation -->
+    <header class="bg-white border-b border-stone-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-emerald-600 rounded-lg flex items-center justify-center text-white">
+                    <i class="fa-solid fa-ear-listen text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-slate-800 leading-none">Phonological Audit V2</h1>
+                    <p class="text-xs text-slate-500 mt-1">Student ID: <strong>AyBo-2026</strong></p>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="hidden md:block">
+                    <div id="session-progress-dots" class="progress-stepper w-48 mb-1">
+                        <!-- Dots via JS -->
+                    </div>
+                    <p class="text-[10px] uppercase font-bold text-stone-400 text-right">Session Progress</p>
+                </div>
+                <button onclick="resetAssessment()" class="p-2 text-stone-400 hover:text-emerald-600 transition-colors">
+                    <i class="fa-solid fa-rotate-left"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-6">
+        
+        <!-- Goal Header Card -->
+        <div class="bg-slate-800 text-white rounded-2xl p-6 mb-8 shadow-lg shadow-slate-200 relative overflow-hidden">
+            <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div class="max-w-2xl">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="bg-emerald-500/20 text-emerald-400 text-xs font-bold px-2 py-1 rounded border border-emerald-500/30 uppercase">Active Goal</span>
+                        <span class="text-slate-400 text-xs">Target Date: Jan 23, 2026</span>
+                    </div>
+                    <p class="text-slate-200 text-sm leading-relaxed">
+                        Demonstrate sound matching and phoneme deletion with <span class="text-emerald-400 font-bold underline decoration-2 underline-offset-4">70% accuracy</span> 
+                        across 7/10 trials using visual and verbal scaffolding.
+                    </p>
+                </div>
+                <div class="flex gap-4">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold">1/23</div>
+                        <div class="text-[10px] uppercase text-slate-400 font-bold">End Date</div>
+                    </div>
+                    <div class="w-px h-10 bg-slate-700"></div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-emerald-400" id="header-accuracy">0%</div>
+                        <div class="text-[10px] uppercase text-slate-400 font-bold">Current</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <!-- LEFT: Assessment Interface -->
+            <div class="lg:col-span-7 space-y-8">
+                
+                <!-- Matching Section -->
+                <section>
+                    <div class="flex items-center justify-between mb-4 px-2">
+                        <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-layer-group text-emerald-600"></i>
+                            Domain 1: Sound Matching
+                        </h3>
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Trials 1-5</span>
+                    </div>
+                    <div class="space-y-3" id="matching-list">
+                        <!-- Rendered by JS -->
+                    </div>
+                </section>
+
+                <!-- Deletion Section -->
+                <section>
+                    <div class="flex items-center justify-between mb-4 px-2">
+                        <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-scissors text-emerald-600"></i>
+                            Domain 2: Phoneme Deletion
+                        </h3>
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Trials 6-10</span>
+                    </div>
+                    <div class="space-y-3" id="deletion-list">
+                        <!-- Rendered by JS -->
+                    </div>
+                </section>
+
+                <!-- Qualitative Input -->
+                <section class="bg-white border border-stone-200 rounded-2xl p-6">
+                    <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-comment-medical text-sky-500"></i>
+                        Clinical Observations
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-[10px] font-bold text-stone-400 uppercase mb-2">Scaffolding Deployed</label>
+                            <div class="flex flex-wrap gap-2" id="scaffold-chips">
+                                <!-- JS chips -->
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-stone-400 uppercase mb-2">Engagement Level</label>
+                            <select id="engagement-select" class="w-full bg-stone-50 border border-stone-200 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500">
+                                <option value="High">High - Sustained Focus</option>
+                                <option value="Moderate" selected>Moderate - Needs Prompting</option>
+                                <option value="Low">Low - Avoidant/Distracted</option>
+                            </select>
+                        </div>
+                    </div>
+                    <textarea id="session-notes" rows="3" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-4 text-sm outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Describe the quality of errors..."></textarea>
+                </section>
+            </div>
+
+            <!-- RIGHT: Insight Dashboard -->
+            <div class="lg:col-span-5 space-y-6">
+                
+                <!-- Live Metrics Card -->
+                <div class="bg-white border border-stone-200 rounded-2xl p-6 shadow-sm">
+                    <h3 class="font-bold text-slate-800 mb-4">Session Analytics</h3>
+                    <div class="flex items-center gap-6">
+                        <div class="w-32 h-32 relative">
+                            <canvas id="liveDonutChart"></canvas>
+                            <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                                <span id="donut-pct" class="text-xl font-bold text-slate-800">0%</span>
+                                <span class="text-[9px] uppercase font-bold text-stone-400">Acc.</span>
+                            </div>
+                        </div>
+                        <div class="flex-1 space-y-3">
+                            <div class="bg-stone-50 rounded-lg p-2 flex justify-between items-center">
+                                <span class="text-xs text-stone-500 font-medium">Domain Balance</span>
+                                <span class="text-[10px] font-bold text-emerald-600 px-2 py-0.5 bg-emerald-50 rounded" id="domain-balance">Calculating...</span>
+                            </div>
+                            <div class="chart-container !h-24">
+                                <canvas id="domainBarChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Longitudinal Trend -->
+                <div class="bg-white border border-stone-200 rounded-2xl p-6 shadow-sm">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-bold text-slate-800">6-Week Progress</h3>
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                            <span class="text-[10px] font-bold text-stone-400 uppercase">Actual</span>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="trendAreaChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Mastery Status Info -->
+                <div id="mastery-alert" class="bg-stone-100 border border-stone-200 rounded-xl p-4 flex gap-4 items-center grayscale opacity-50 transition-all">
+                    <div class="w-12 h-12 rounded-full bg-white flex items-center justify-center text-emerald-600 shadow-sm">
+                        <i class="fa-solid fa-trophy text-xl"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-sm text-slate-700">Mastery Achievement</h4>
+                        <p class="text-xs text-slate-500">Goal: 7/10 correct for 6 consecutive weeks.</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // --- Data & Configuration ---
+        const trials = [
+            { id: 1, domain: 'Matching', sound: '/s/', pos: 'Initial', task: 'Sun, Bat, Cup', correct: 'Sun' },
+            { id: 2, domain: 'Matching', sound: '/m/', pos: 'Initial', task: 'Moon, Dog, Leaf', correct: 'Moon' },
+            { id: 3, domain: 'Matching', sound: '/t/', pos: 'Final', task: 'Cat, Pig, Sun', correct: 'Cat' },
+            { id: 4, domain: 'Matching', sound: '/p/', pos: 'Final', task: 'Cup, Hat, Log', correct: 'Cup' },
+            { id: 5, domain: 'Matching', sound: '/a/', pos: 'Medial', task: 'Cat, Hen, Top', correct: 'Cat' },
+            { id: 6, domain: 'Deletion', sound: '/s/', pos: 'Initial', task: '"Sam" without /s/', correct: 'am' },
+            { id: 7, domain: 'Deletion', sound: '/m/', pos: 'Initial', task: '"Meat" without /m/', correct: 'eat' },
+            { id: 8, domain: 'Deletion', sound: '/p/', pos: 'Final', task: '"Cup" without /p/', correct: 'cu' },
+            { id: 9, domain: 'Deletion', sound: '/t/', pos: 'Final', task: '"Boat" without /t/', correct: 'bo' },
+            { id: 10, domain: 'Deletion', sound: '/s/', pos: 'Blend', task: '"Stand" without /s/', correct: 'tand' }
+        ];
+
+        const history = [
+            { week: 1, acc: 40 },
+            { week: 2, acc: 50 },
+            { week: 3, acc: 60 },
+            { week: 4, acc: 50 },
+            { week: 5, acc: 65 }
+        ];
+
+        const scaffolding = ["Visual Cards", "Verbal Elongation", "Physical Chips", "Mirror Work"];
+
+        // --- State ---
+        let sessionResults = {}; // { trialId: true/false }
+        let selectedScaffolds = new Set();
+        let charts = {};
+
+        // --- UI Rendering ---
+        function renderTrialList() {
+            const matchContainer = document.getElementById('matching-list');
+            const deleteContainer = document.getElementById('deletion-list');
+            const dotsContainer = document.getElementById('session-progress-dots');
+
+            matchContainer.innerHTML = '';
+            deleteContainer.innerHTML = '';
+            dotsContainer.innerHTML = '';
+
+            trials.forEach((t, i) => {
+                const isMatching = t.domain === 'Matching';
+                const card = document.createElement('div');
+                card.className = "trial-card bg-white border border-stone-200 rounded-xl p-4 flex items-center justify-between group hover:border-emerald-200";
+                
+                card.innerHTML = `
+                    <div class="flex items-center gap-4">
+                        <div class="w-8 h-8 rounded-full bg-stone-50 border border-stone-200 flex items-center justify-center text-[10px] font-bold text-stone-400">
+                            ${t.id}
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2 mb-0.5">
+                                <span class="text-[10px] font-black uppercase tracking-widest text-emerald-600">${t.pos}</span>
+                                <span class="text-xs font-bold text-slate-800">${t.sound}</span>
+                            </div>
+                            <p class="text-sm text-slate-500">${t.task}</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="recordScore(${t.id}, false)" id="btn-fail-${t.id}" class="w-10 h-10 rounded-lg border border-stone-200 text-stone-300 hover:text-red-500 hover:bg-red-50 transition-all flex items-center justify-center">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                        <button onclick="recordScore(${t.id}, true)" id="btn-pass-${t.id}" class="w-10 h-10 rounded-lg border border-stone-200 text-stone-300 hover:text-emerald-500 hover:bg-emerald-50 transition-all flex items-center justify-center">
+                            <i class="fa-solid fa-check"></i>
+                        </button>
+                    </div>
+                `;
+
+                if (isMatching) matchContainer.appendChild(card);
+                else deleteContainer.appendChild(card);
+
+                const dot = document.createElement('div');
+                dot.id = `dot-${t.id}`;
+                dot.className = "step-dot";
+                dotsContainer.appendChild(dot);
+            });
+
+            // Render Scaffolds
+            const scaffoldWrap = document.getElementById('scaffold-chips');
+            scaffoldWrap.innerHTML = '';
+            scaffolding.forEach(s => {
+                const btn = document.createElement('button');
+                btn.className = "px-3 py-1.5 rounded-lg border border-stone-200 text-xs text-stone-500 hover:bg-stone-50 transition-all";
+                btn.innerText = s;
+                btn.onclick = () => toggleScaffold(s, btn);
+                scaffoldWrap.appendChild(btn);
+            });
+        }
+
+        // --- Core Logic ---
+        function toggleScaffold(scaffold, element) {
+            if (selectedScaffolds.has(scaffold)) {
+                selectedScaffolds.delete(scaffold);
+                element.classList.remove('bg-sky-50', 'text-sky-600', 'border-sky-300');
+            } else {
+                selectedScaffolds.add(scaffold);
+                element.classList.add('bg-sky-50', 'text-sky-600', 'border-sky-300');
+            }
+        }
+
+        function recordScore(id, isCorrect) {
+            sessionResults[id] = isCorrect;
+            
+            // UI Toggle
+            const passBtn = document.getElementById(`btn-pass-${id}`);
+            const failBtn = document.getElementById(`btn-fail-${id}`);
+            const dot = document.getElementById(`dot-${id}`);
+
+            passBtn.classList.remove('active');
+            failBtn.classList.remove('active');
+            dot.classList.remove('completed', 'failed');
+
+            if (isCorrect) {
+                passBtn.classList.add('active', 'btn-correct');
+                dot.classList.add('completed');
+            } else {
+                failBtn.classList.add('active', 'btn-incorrect');
+                dot.classList.add('failed');
+            }
+
+            updateAnalytics();
+        }
+
+        function updateAnalytics() {
+            const results = Object.values(sessionResults);
+            const correctCount = results.filter(r => r === true).length;
+            const accuracy = Math.round((correctCount / 10) * 100);
+
+            // Update Header & Badge
+            document.getElementById('header-accuracy').innerText = accuracy + '%';
+            document.getElementById('donut-pct').innerText = accuracy + '%';
+
+            // Check Mastery
+            const alert = document.getElementById('mastery-alert');
+            if (accuracy >= 70) {
+                alert.classList.remove('grayscale', 'opacity-50');
+                alert.classList.add('border-emerald-200', 'bg-emerald-50');
+            } else {
+                alert.classList.add('grayscale', 'opacity-50');
+                alert.classList.remove('border-emerald-200', 'bg-emerald-50');
+            }
+
+            // Domain Calculation
+            const matchAcc = trials.filter(t => t.domain === 'Matching' && sessionResults[t.id] === true).length / 5 * 100;
+            const deleteAcc = trials.filter(t => t.domain === 'Deletion' && sessionResults[t.id] === true).length / 5 * 100;
+            
+            const balanceText = matchAcc === deleteAcc ? "Balanced" : (matchAcc > deleteAcc ? "Matching Stronger" : "Deletion Stronger");
+            document.getElementById('domain-balance').innerText = balanceText;
+
+            // Update Charts
+            charts.donut.data.datasets[0].data = [correctCount, 10 - correctCount];
+            charts.donut.update();
+
+            charts.bar.data.datasets[0].data = [matchAcc, deleteAcc];
+            charts.bar.update();
+        }
+
+        function initCharts() {
+            // Donut
+            charts.donut = new Chart(document.getElementById('liveDonutChart'), {
+                type: 'doughnut',
+                data: {
+                    datasets: [{
+                        data: [0, 10],
+                        backgroundColor: ['#10b981', '#f5f5f4'],
+                        borderWidth: 0,
+                        cutout: '80%'
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { tooltip: { enabled: false } } }
+            });
+
+            // Domain Bar
+            charts.bar = new Chart(document.getElementById('domainBarChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['Match', 'Delete'],
+                    datasets: [{
+                        data: [0, 0],
+                        backgroundColor: ['#10b981', '#0ea5e9'],
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { 
+                        x: { display: false, max: 100 }, 
+                        y: { grid: { display: false }, ticks: { font: { size: 9, weight: 'bold' } } } 
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            // Trend Area
+            charts.trend = new Chart(document.getElementById('trendAreaChart'), {
+                type: 'line',
+                data: {
+                    labels: ['W1', 'W2', 'W3', 'W4', 'W5', 'Current'],
+                    datasets: [{
+                        label: 'Accuracy',
+                        data: [...history.map(h => h.acc), 0],
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 4
+                    }, {
+                        label: 'Goal',
+                        data: [70, 70, 70, 70, 70, 70],
+                        borderColor: '#e7e5e4',
+                        borderDash: [5, 5],
+                        pointRadius: 0,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, max: 100, ticks: { font: { size: 10 } } },
+                        x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        function resetAssessment() {
+            sessionResults = {};
+            selectedScaffolds.clear();
+            document.getElementById('session-notes').value = '';
+            document.getElementById('engagement-select').value = 'Moderate';
+            renderTrialList();
+            updateAnalytics();
+        }
+
+        window.onload = () => {
+            renderTrialList();
+            initCharts();
+        };
+    </script>
+</body>
+</html>

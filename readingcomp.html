@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reading Comprehension Support Kit</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .tab-active { background-color: white; color: #4f46e5; box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1); }
+        .hidden { display: none; }
+        .story-selected { border-color: #4f46e5; background-color: #f5f3ff; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen p-4 md:p-8">
+
+    <div class="max-w-5xl mx-auto">
+        <!-- Header -->
+        <header class="bg-white rounded-2xl shadow-sm p-6 mb-6 flex flex-col md:flex-row justify-between items-center gap-4 border border-slate-200">
+            <div>
+                <h1 class="text-2xl font-black text-slate-800 flex items-center gap-2">
+                    <span class="text-indigo-600">📖</span> AyBo's Reading Goal
+                </h1>
+                <p class="text-slate-500 text-sm mt-1">Target: 90% Accuracy in 9/10 Trials by 1/23/2026</p>
+            </div>
+            <div class="flex bg-slate-100 p-1 rounded-xl">
+                <button id="tab-session" onclick="switchTab('session')" class="px-6 py-2 rounded-lg font-bold text-sm transition-all tab-active">
+                    Current Session
+                </button>
+                <button id="tab-data" onclick="switchTab('data')" class="px-6 py-2 rounded-lg font-bold text-sm transition-all text-slate-500">
+                    Progress Tracker
+                </button>
+            </div>
+        </header>
+
+        <!-- Session Tab -->
+        <div id="view-session" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Story Selector -->
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
+                    <div class="flex gap-3 pb-2" id="story-menu">
+                        <!-- Story buttons will be injected here -->
+                    </div>
+                </div>
+
+                <!-- Reading Text Section -->
+                <section class="bg-white rounded-2xl shadow-sm p-8 border border-slate-200">
+                    <div class="flex justify-between items-start mb-6">
+                        <div>
+                            <span id="trial-count-badge" class="bg-indigo-100 text-indigo-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-tighter">
+                                Trial #1
+                            </span>
+                            <h2 id="story-title" class="text-3xl font-bold mt-2 text-slate-800">The Garden Surprise</h2>
+                        </div>
+                        <button onclick="speakText()" class="p-3 bg-indigo-50 text-indigo-600 rounded-full hover:bg-indigo-100 transition-colors">
+                            🔊
+                        </button>
+                    </div>
+                    
+                    <div class="prose prose-slate max-w-none">
+                        <p id="story-text" class="text-xl leading-relaxed text-slate-700 bg-slate-50 p-6 rounded-xl border border-dashed border-slate-300">
+                            Loading story...
+                        </p>
+                    </div>
+
+                    <div class="mt-8 flex items-center gap-4">
+                        <button onclick="toggleStarters()" id="starter-toggle" class="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm border-2 border-blue-200 text-blue-600 hover:bg-blue-50 transition-all">
+                            💬 Show Sentence Starters
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Action Bar -->
+                <div class="bg-white p-6 rounded-2xl border-2 border-indigo-100 flex justify-between items-center shadow-md">
+                    <div class="text-slate-600">
+                        <span class="font-bold text-indigo-600">Accuracy for this trial: </span>
+                        <span id="current-accuracy-percent">0</span>%
+                    </div>
+                    <div class="flex gap-3">
+                        <button onclick="resetSession()" class="flex items-center gap-2 px-4 py-2 text-slate-500 font-bold hover:bg-slate-100 rounded-lg transition-colors">
+                            ↺ Clear
+                        </button>
+                        <button onclick="submitTrial()" class="flex items-center gap-2 px-8 py-2 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all active:scale-95">
+                            Save Trial Result
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Questions Sidebar -->
+            <div class="space-y-4">
+                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest px-2">
+                    ❓ Literal Comprehension
+                </h3>
+                
+                <div id="q-who" class="q-card p-4 rounded-xl border-2 border-gray-200 bg-white transition-all">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="p-2 rounded-lg bg-pink-500 text-white">👤</div>
+                        <span class="font-bold text-gray-700 uppercase text-sm">Who</span>
+                    </div>
+                    <p class="sentence-starter text-xs text-blue-600 italic mb-3 hidden">"The story is about..."</p>
+                    <div class="flex gap-2">
+                        <button onclick="answer('who', true)" class="btn-correct flex-1 py-2 bg-gray-100 rounded-md text-sm font-medium">✓ Correct</button>
+                        <button onclick="answer('who', false)" class="btn-incorrect flex-1 py-2 bg-gray-100 rounded-md text-sm font-medium">✕ Incorrect</button>
+                    </div>
+                </div>
+
+                <div id="q-what" class="q-card p-4 rounded-xl border-2 border-gray-200 bg-white transition-all">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="p-2 rounded-lg bg-orange-500 text-white">📝</div>
+                        <span class="font-bold text-gray-700 uppercase text-sm">What</span>
+                    </div>
+                    <p class="sentence-starter text-xs text-blue-600 italic mb-3 hidden">"The main thing that happened was..."</p>
+                    <div class="flex gap-2">
+                        <button onclick="answer('what', true)" class="btn-correct flex-1 py-2 bg-gray-100 rounded-md text-sm font-medium">✓ Correct</button>
+                        <button onclick="answer('what', false)" class="btn-incorrect flex-1 py-2 bg-gray-100 rounded-md text-sm font-medium">✕ Incorrect</button>
+                    </div>
+                </div>
+
+                <div id="q-when" class="q-card p-4 rounded-xl border-2 border-gray-200 bg-white transition-all">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="p-2 rounded-lg bg-blue-500 text-white">⏰</div>
+                        <span class="font-bold text-gray-700 uppercase text-sm">When</span>
+                    </div>
+                    <p class="sentence-starter text-xs text-blue-600 italic mb-3 hidden">"This took place during..."</p>
+                    <div class="flex gap-2">
+                        <button onclick="answer('when', true)" class="btn-correct flex-1 py-2 bg-gray-100 rounded-md text-sm font-medium">✓ Correct</button>
+                        <button onclick="answer('when', false)" class="btn-incorrect flex-1 py-2 bg-gray-100 rounded-md text-sm font-medium">✕ Incorrect</button>
+                    </div>
+                </div>
+
+                <div id="q-where" class="q-card p-4 rounded-xl border-2 border-gray-200 bg-white transition-all">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="p-2 rounded-lg bg-emerald-500 text-white">📍</div>
+                        <span class="font-bold text-gray-700 uppercase text-sm">Where</span>
+                    </div>
+                    <p class="sentence-starter text-xs text-blue-600 italic mb-3 hidden">"The setting of the story is..."</p>
+                    <div class="flex gap-2">
+                        <button onclick="answer('where', true)" class="btn-correct flex-1 py-2 bg-gray-100 rounded-md text-sm font-medium">✓ Correct</button>
+                        <button onclick="answer('where', false)" class="btn-incorrect flex-1 py-2 bg-gray-100 rounded-md text-sm font-medium">✕ Incorrect</button>
+                    </div>
+                </div>
+
+                <div id="q-why" class="q-card p-4 rounded-xl border-2 border-gray-200 bg-white transition-all">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="p-2 rounded-lg bg-purple-500 text-white">💡</div>
+                        <span class="font-bold text-gray-700 uppercase text-sm">Why</span>
+                    </div>
+                    <p class="sentence-starter text-xs text-blue-600 italic mb-3 hidden">"This happened because..."</p>
+                    <div class="flex gap-2">
+                        <button onclick="answer('why', true)" class="btn-correct flex-1 py-2 bg-gray-100 rounded-md text-sm font-medium">✓ Correct</button>
+                        <button onclick="answer('why', false)" class="btn-incorrect flex-1 py-2 bg-gray-100 rounded-md text-sm font-medium">✕ Incorrect</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Tab -->
+        <div id="view-data" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hidden">
+            <div class="p-8 border-b border-slate-100 flex justify-between items-center">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-800">Staff-Charted Data</h2>
+                    <p class="text-slate-500">Progress toward 90% accuracy goal</p>
+                </div>
+                <div class="text-right">
+                    <div id="success-fraction" class="text-4xl font-black text-indigo-600">0/10</div>
+                    <div class="text-xs font-bold text-slate-400 uppercase tracking-widest">Successful Trials</div>
+                </div>
+            </div>
+            
+            <div class="p-8">
+                <div id="empty-state" class="text-center py-20 bg-slate-50 rounded-xl border-2 border-dashed border-slate-200">
+                    <div class="text-4xl mb-4">📊</div>
+                    <p class="text-slate-500 font-medium">No trials recorded yet.</p>
+                </div>
+
+                <div id="data-content" class="grid grid-cols-1 md:grid-cols-2 gap-8 hidden">
+                    <div id="trial-list" class="space-y-3"></div>
+
+                    <div class="bg-indigo-50 rounded-2xl p-6 flex flex-col justify-center items-center">
+                        <h3 class="text-indigo-800 font-bold mb-6">Target Completion</h3>
+                        <div id="target-grid" class="grid grid-cols-5 gap-3"></div>
+                        <p id="progress-message" class="mt-8 text-indigo-700 text-sm text-center font-medium max-w-xs leading-relaxed">
+                            AyBo needs 9 successful trials to reach her goal.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="mt-12 text-center text-slate-400 text-xs">
+            <p>Scaffolded IEP Support Dashboard • Created for AyBo • Goal Deadline: Jan 23, 2026</p>
+        </footer>
+    </div>
+
+    <script>
+        const storyLibrary = [
+            {
+                title: "The Garden Surprise",
+                text: "Yesterday morning, Maya went to her backyard garden to pick some tomatoes. She was surprised to find a tiny blue bird sitting on her watering can. Maya stayed very still so she wouldn't scare the bird away. She realized the bird was just thirsty because the sun was very hot.",
+                type: "Narrative"
+            },
+            {
+                title: "How Bees Help",
+                text: "Bees are very busy insects in the springtime. They fly from flower to flower to find sweet nectar for food. While they eat, yellow dust called pollen sticks to their fuzzy legs. When they move to the next flower, they drop the pollen, which helps new seeds grow in the garden.",
+                type: "Informational"
+            },
+            {
+                title: "Lost and Found",
+                text: "Leo felt sad when he couldn't find his favorite red car after school on Tuesday. He looked under his bed and behind the sofa in the living room. Finally, he spotted the car inside his shiny blue rain boot near the front door. Leo smiled because he remembered putting it there to keep it safe.",
+                type: "Narrative"
+            },
+            {
+                title: "Our Sun",
+                text: "The sun is a very big star in the center of our solar system. It gives light and heat to the Earth during the daytime. Without the sun, our world would be very dark and very cold. Plants need the sun's energy to make food and grow big and strong.",
+                type: "Informational"
+            },
+            {
+                title: "Baking Cookies",
+                text: "On Saturday afternoon, Sam and his dad decided to bake chocolate chip cookies. They mixed flour, sugar, and eggs in a large yellow bowl. Sam carefully added the chocolate chips at the very end. The kitchen smelled wonderful while the cookies baked in the hot oven for ten minutes.",
+                type: "Narrative"
+            },
+            {
+                title: "Rainy Days",
+                text: "Rain falls from clouds in the sky to help the Earth. It fills up our lakes and rivers so we have water to drink. Rain also gives water to trees and grass so they stay green. Sometimes, when the sun comes out while it is still raining, you can see a colorful rainbow.",
+                type: "Informational"
+            },
+            {
+                title: "The Soccer Goal",
+                text: "Emma was nervous before her soccer game at the park this morning. She practiced kicking the ball every day this week. In the second half of the game, her teammate passed her the ball. Emma kicked it hard and it went right into the net. Her whole team cheered for her!",
+                type: "Narrative"
+            },
+            {
+                title: "Frogs",
+                text: "Most frogs live near ponds or lakes because they like wet places. They have strong back legs that help them jump very far. Frogs use their long, sticky tongues to catch bugs to eat. In the winter, some frogs hide in the mud at the bottom of the pond to sleep until spring.",
+                type: "Informational"
+            },
+            {
+                title: "A New Friend",
+                text: "A new boy named Liam joined Mrs. Miller's class on Monday. During recess, he sat by himself on the wooden bench. Sarah saw him and asked if he wanted to play tag. Liam smiled and followed her to the grass. They had a great time running together until the bell rang.",
+                type: "Narrative"
+            },
+            {
+                title: "Apple Trees",
+                text: "Apple trees go through many changes during the year. In the spring, beautiful pink and white flowers grow on the branches. During the summer, the tiny green apples get bigger. By autumn, the apples turn bright red and are ready for people to pick and eat.",
+                type: "Informational"
+            }
+        ];
+
+        let trials = [];
+        let responses = { who: null, what: null, when: null, where: null, why: null };
+        let startersVisible = false;
+        let selectedStoryIndex = 0;
+
+        function init() {
+            renderStoryMenu();
+            loadStory(0);
+        }
+
+        function renderStoryMenu() {
+            const menu = document.getElementById('story-menu');
+            menu.innerHTML = '';
+            storyLibrary.forEach((story, index) => {
+                const btn = document.createElement('button');
+                btn.className = `flex-shrink-0 px-4 py-2 rounded-xl border-2 text-sm font-bold transition-all ${index === selectedStoryIndex ? 'story-selected' : 'border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200'}`;
+                btn.innerHTML = `
+                    <div class="text-[10px] uppercase opacity-60">${story.type}</div>
+                    <div>Trial ${index + 1}</div>
+                `;
+                btn.onclick = () => loadStory(index);
+                menu.appendChild(btn);
+            });
+        }
+
+        function loadStory(index) {
+            selectedStoryIndex = index;
+            const story = storyLibrary[index];
+            document.getElementById('story-title').textContent = story.title;
+            document.getElementById('story-text').textContent = story.text;
+            renderStoryMenu();
+            resetSession();
+        }
+
+        function switchTab(tab) {
+            const sessionBtn = document.getElementById('tab-session');
+            const dataBtn = document.getElementById('tab-data');
+            const sessionView = document.getElementById('view-session');
+            const dataView = document.getElementById('view-data');
+
+            if (tab === 'session') {
+                sessionBtn.classList.add('tab-active');
+                sessionBtn.classList.remove('text-slate-500');
+                dataBtn.classList.remove('tab-active');
+                dataBtn.classList.add('text-slate-500');
+                sessionView.classList.remove('hidden');
+                dataView.classList.add('hidden');
+            } else {
+                dataBtn.classList.add('tab-active');
+                dataBtn.classList.remove('text-slate-500');
+                sessionBtn.classList.remove('tab-active');
+                sessionBtn.classList.add('text-slate-500');
+                dataView.classList.remove('hidden');
+                sessionView.classList.add('hidden');
+                renderData();
+            }
+        }
+
+        function toggleStarters() {
+            startersVisible = !startersVisible;
+            const starters = document.querySelectorAll('.sentence-starter');
+            const btn = document.getElementById('starter-toggle');
+            
+            starters.forEach(s => s.classList.toggle('hidden', !startersVisible));
+            btn.textContent = startersVisible ? '💬 Hide Sentence Starters' : '💬 Show Sentence Starters';
+            btn.classList.toggle('bg-blue-600', startersVisible);
+            btn.classList.toggle('text-white', startersVisible);
+        }
+
+        function answer(type, isCorrect) {
+            responses[type] = isCorrect;
+            updateUI();
+        }
+
+        function updateUI() {
+            let correct = 0;
+            let answered = 0;
+
+            for (const key in responses) {
+                const card = document.getElementById(`q-${key}`);
+                const btnCorrect = card.querySelector('.btn-correct');
+                const btnIncorrect = card.querySelector('.btn-incorrect');
+
+                card.classList.remove('border-green-500', 'bg-green-50', 'border-red-500', 'bg-red-50', 'border-gray-200');
+
+                if (responses[key] === true) {
+                    card.classList.add('border-green-500', 'bg-green-50');
+                    btnCorrect.className = "btn-correct flex-1 py-2 bg-green-600 text-white rounded-md text-sm font-medium";
+                    btnIncorrect.className = "btn-incorrect flex-1 py-2 bg-gray-100 text-gray-600 rounded-md text-sm font-medium";
+                    correct++;
+                    answered++;
+                } else if (responses[key] === false) {
+                    card.classList.add('border-red-500', 'bg-red-50');
+                    btnCorrect.className = "btn-correct flex-1 py-2 bg-gray-100 text-gray-600 rounded-md text-sm font-medium";
+                    btnIncorrect.className = "btn-incorrect flex-1 py-2 bg-red-600 text-white rounded-md text-sm font-medium";
+                    answered++;
+                } else {
+                    card.classList.add('border-gray-200');
+                    btnCorrect.className = "btn-correct flex-1 py-2 bg-gray-100 text-gray-600 rounded-md text-sm font-medium";
+                    btnIncorrect.className = "btn-incorrect flex-1 py-2 bg-gray-100 text-gray-600 rounded-md text-sm font-medium";
+                }
+            }
+
+            const accuracy = answered > 0 ? Math.round((correct / 5) * 100) : 0;
+            document.getElementById('current-accuracy-percent').textContent = accuracy;
+        }
+
+        function resetSession() {
+            responses = { who: null, what: null, when: null, where: null, why: null };
+            updateUI();
+        }
+
+        function submitTrial() {
+            let correct = 0;
+            let answered = 0;
+            for (const key in responses) {
+                if (responses[key] !== null) {
+                    answered++;
+                    if (responses[key] === true) correct++;
+                }
+            }
+
+            if (answered === 0) return;
+
+            const accuracy = (correct / 5) * 100;
+            const newTrial = {
+                id: Date.now(),
+                title: storyLibrary[selectedStoryIndex].title,
+                date: new Date().toLocaleDateString(),
+                accuracy: accuracy,
+                passed: accuracy >= 90
+            };
+
+            trials.push(newTrial);
+            resetSession();
+            
+            // Move to next story if available
+            if (selectedStoryIndex < storyLibrary.length - 1) {
+                loadStory(selectedStoryIndex + 1);
+            }
+            
+            document.getElementById('trial-count-badge').textContent = `Trial #${trials.length + 1}`;
+            
+            const msg = document.createElement('div');
+            msg.className = "fixed bottom-4 right-4 bg-slate-800 text-white px-6 py-3 rounded-xl shadow-lg transition-opacity duration-500 z-50";
+            msg.textContent = "Trial Saved Successfully";
+            document.body.appendChild(msg);
+            setTimeout(() => {
+                msg.style.opacity = '0';
+                setTimeout(() => msg.remove(), 500);
+            }, 2000);
+        }
+
+        function renderData() {
+            const emptyState = document.getElementById('empty-state');
+            const dataContent = document.getElementById('data-content');
+            const trialList = document.getElementById('trial-list');
+            const targetGrid = document.getElementById('target-grid');
+            const successFraction = document.getElementById('success-fraction');
+            const progressMsg = document.getElementById('progress-message');
+
+            if (trials.length === 0) {
+                emptyState.classList.remove('hidden');
+                dataContent.classList.add('hidden');
+                successFraction.textContent = "0/10";
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            dataContent.classList.remove('hidden');
+
+            trialList.innerHTML = '';
+            [...trials].reverse().forEach((trial, index) => {
+                const div = document.createElement('div');
+                div.className = "flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100";
+                div.innerHTML = `
+                    <div class="flex items-center gap-4">
+                        <span class="w-10 h-10 flex items-center justify-center bg-white rounded-full font-bold text-slate-400 border border-slate-200">
+                            ${trials.length - index}
+                        </span>
+                        <div>
+                            <div class="font-bold text-slate-800">${trial.title}</div>
+                            <div class="text-xs text-slate-500">${trial.date}</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-6">
+                        <div class="font-black text-lg ${trial.passed ? 'text-green-600' : 'text-amber-600'}">
+                            ${Math.round(trial.accuracy)}%
+                        </div>
+                        <span class="text-2xl">${trial.passed ? '✅' : '⚪'}</span>
+                    </div>
+                `;
+                trialList.appendChild(div);
+            });
+
+            const passedCount = trials.filter(t => t.passed).length;
+            successFraction.textContent = `${passedCount}/10`;
+            
+            targetGrid.innerHTML = '';
+            for (let i = 0; i < 10; i++) {
+                const box = document.createElement('div');
+                let styleClass = "bg-white border-slate-200 text-slate-300";
+                
+                if (i < passedCount) {
+                    styleClass = "bg-green-500 border-green-600 text-white shadow-md";
+                } else if (i < trials.length) {
+                    styleClass = "bg-amber-100 border-amber-300 text-amber-700";
+                }
+
+                box.className = `w-12 h-12 rounded-lg flex items-center justify-center text-sm font-bold border-2 ${styleClass}`;
+                box.textContent = i + 1;
+                targetGrid.appendChild(box);
+            }
+
+            const remaining = Math.max(0, 9 - passedCount);
+            progressMsg.textContent = remaining === 0 
+                ? "Goal Met! AyBo has achieved 9 successful trials." 
+                : `AyBo needs ${remaining} more successful trials (90%+) to reach her goal.`;
+        }
+
+        function speakText() {
+            const text = document.getElementById('story-text').textContent;
+            const utterance = new SpeechSynthesisUtterance(text);
+            window.speechSynthesis.speak(utterance);
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
