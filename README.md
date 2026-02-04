@@ -29,7 +29,7 @@ Alternatively, open any individual `.html` file directly to access that specific
 
 | Activity | File | Description |
 |----------|------|-------------|
-| **BioLevels** | `BioLevels` | Learn taxonomy classification with the Hawaiian Goose (Nene) |
+| **BioLevels** | `BioLevels.html` | Learn taxonomy classification with the Hawaiian Goose (Nene) |
 | **Life to Scale** | `lifetoScale.html` | Explore the hierarchy of life from atoms to organisms |
 
 ### Life Skills & Social-Emotional
@@ -73,7 +73,7 @@ Works in all modern browsers:
 bolesbook/
 ├── index.html           # Main hub page with links to all activities
 ├── README.md            # This file
-├── BioLevels            # Taxonomy learning game
+├── BioLevels.html       # Taxonomy learning game
 ├── IndyLiving.HTML      # Life skills assessment
 ├── SavannaSquad.html    # Self-regulation adventure game
 ├── phonaware.html       # Phonological awareness tracker
