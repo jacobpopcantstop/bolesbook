@@ -1,372 +1,544 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Dna, 
-  Search, 
-  ArrowRight, 
-  Home, 
-  Boxes, 
-  CheckCircle2, 
-  Bird, 
-  LayoutGrid,
-  Info,
-  BookOpen
-} from 'lucide-react';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BioLevels - The Great Sorting Adventure</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
 
-const App = () => {
-  const [level, setLevel] = useState(0); // 0: Intro, 1: Basics, 2: Domains, 3: Nene
-  const [feedback, setFeedback] = useState("");
-  const [subFeedback, setSubFeedback] = useState("");
+        * {
+            font-family: 'Nunito', sans-serif;
+        }
 
-  // Level 1 State
-  const [l1Items] = useState([
-    { id: 1, name: "Spoon", category: "Kitchen", color: "bg-blue-200" },
-    { id: 2, name: "Pillow", category: "Bedroom", color: "bg-purple-200" },
-    { id: 3, name: "Fork", category: "Kitchen", color: "bg-blue-200" },
-    { id: 4, name: "Blanket", category: "Bedroom", color: "bg-purple-200" },
-  ]);
-  const [l1Done, setL1Done] = useState([]);
-  const [l1ActiveSelection, setL1ActiveSelection] = useState(null);
+        .animate-pulse-slow {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
 
-  // Level 2 State
-  const domains = [
-    { name: "Bacteria", trait: "Tiny single cells that do not have a nucleus.", color: "bg-emerald-400" },
-    { name: "Archaea", trait: "Single cells that often live in extreme heat or salt.", color: "bg-orange-400" },
-    { name: "Eukarya", trait: "Complex cells that have a Nucleus (this includes humans!)", color: "bg-sky-400" }
-  ];
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
 
-  // Level 3 State (Nene Hierarchy with Latin Meanings)
-  const neneLevels = [
-    { 
-      rank: "Domain", 
-      name: "Eukarya", 
-      info: "The broadest group. Includes everything with complex cells.",
-      meaning: "From Greek 'eu' (true) and 'karyon' (nut/nucleus)."
-    },
-    { 
-      rank: "Kingdom", 
-      name: "Animalia", 
-      info: "Multicellular organisms that breathe oxygen and consume organic material.",
-      meaning: "Latin for 'having breath' or 'living being'." 
-    },
-    { 
-      rank: "Phylum", 
-      name: "Chordata", 
-      info: "Animals that have a spinal cord or backbone.",
-      meaning: "Latin 'chorda' meaning 'cord'."
-    },
-    { 
-      rank: "Class", 
-      name: "Aves", 
-      info: "The group for all birds—warm-blooded, feathered, and egg-laying.",
-      meaning: "Latin for 'bird'."
-    },
-    { 
-      rank: "Order", 
-      name: "Anseriformes", 
-      info: "Waterfowl like ducks, geese, and swans.",
-      meaning: "Latin 'anser' (goose) + 'formis' (shape)."
-    },
-    { 
-      rank: "Family", 
-      name: "Anatidae", 
-      info: "The specific family of water birds that can swim on the surface.",
-      meaning: "From Latin 'anas', meaning 'duck'."
-    },
-    { 
-      rank: "Genus", 
-      name: "Branta", 
-      info: "A group of 'black geese' with dark plumage.",
-      meaning: "Old Norse/Latinized word for 'burnt' (referring to their dark color)."
-    },
-    { 
-      rank: "Species", 
-      name: "sandvicensis", 
-      info: "The specific name for the Hawaiian Goose.",
-      meaning: "Refers to the 'Sandwich Islands', the old name for Hawaii!"
-    }
-  ];
-  const [l3Current, setL3Current] = useState(0);
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-50 p-4 md:p-8">
+    <div class="max-w-5xl mx-auto bg-white rounded-[40px] shadow-2xl overflow-hidden border-8 border-slate-100">
 
-  const nextLevel = () => {
-    setLevel(prev => prev + 1);
-    setFeedback("");
-    setSubFeedback("");
-  };
-
-  const handleL1Drop = (item, target) => {
-    if (item.category === target) {
-      setL1Done([...l1Done, item.id]);
-      setFeedback("Great job! That belongs there.");
-      setL1ActiveSelection(null);
-    } else {
-      setFeedback("Not quite. Try another box!");
-    }
-  };
-
-  const renderIntro = () => (
-    <div className="flex flex-col items-center text-center space-y-8 p-6">
-      <div className="bg-yellow-100 p-8 rounded-full border-4 border-yellow-400">
-        <Search size={80} className="text-yellow-600" />
-      </div>
-      <h1 className="text-5xl font-black text-slate-800">The Great Sorting Adventure</h1>
-      <p className="text-2xl text-slate-600 max-w-2xl leading-relaxed">
-        Scientists are like detectives! They group living things together to understand how they are related. 
-        Are you ready to become a <strong>Taxonomist</strong>?
-      </p>
-      <button 
-        onClick={nextLevel}
-        className="bg-green-500 hover:bg-green-600 text-white text-3xl font-bold py-6 px-12 rounded-2xl shadow-xl transform transition hover:scale-105 flex items-center gap-4"
-      >
-        Start Learning <ArrowRight size={32} />
-      </button>
-    </div>
-  );
-
-  const renderLevel1 = () => (
-    <div className="space-y-8">
-      <div className="bg-blue-50 p-6 rounded-xl border-l-8 border-blue-500 text-left">
-        <h2 className="text-3xl font-bold text-blue-800 mb-2 flex items-center gap-2">
-          <Home className="inline" /> Level 1: Sorting Your World
-        </h2>
-        <p className="text-xl text-blue-900">
-          Before we study animals, let's practice sorting things at home. 
-          Tap an item, then tap the right box!
-        </p>
-      </div>
-
-      <div className="flex flex-wrap gap-4 justify-center py-4">
-        {l1Items.filter(i => !l1Done.includes(i.id)).map(item => (
-          <button 
-            key={item.id}
-            onClick={() => setL1ActiveSelection(item)}
-            className={`${item.color} border-4 ${l1ActiveSelection?.id === item.id ? 'border-yellow-500 scale-110 shadow-lg' : 'border-slate-400'} p-6 rounded-xl text-2xl font-bold transition-all`}
-          >
-            {item.name}
-          </button>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-2 gap-8 mt-8">
-        {["Kitchen", "Bedroom"].map(room => (
-          <button 
-            key={room}
-            onClick={() => {
-              if(l1ActiveSelection) handleL1Drop(l1ActiveSelection, room);
-            }}
-            className={`h-48 border-4 border-dashed border-slate-400 rounded-3xl flex flex-col items-center justify-center bg-white transition-colors ${l1ActiveSelection ? 'hover:bg-yellow-50 border-yellow-400' : ''}`}
-          >
-            <span className="text-3xl font-black text-slate-400 uppercase tracking-widest">{room} BOX</span>
-            {l1ActiveSelection && <span className="text-sm text-blue-600 mt-2 font-bold animate-pulse">Place {l1ActiveSelection.name} here?</span>}
-          </button>
-        ))}
-      </div>
-
-      {l1Done.length === 4 && (
-        <div className="mt-8 text-center">
-          <button onClick={nextLevel} className="bg-green-500 text-white py-4 px-10 rounded-xl text-2xl font-bold shadow-lg hover:bg-green-600 transform transition hover:scale-105">
-            Level 2: The 3 Big Domains →
-          </button>
-        </div>
-      )}
-      
-      <p className="text-center text-xl font-bold text-orange-600 h-8">{feedback}</p>
-    </div>
-  );
-
-  const renderLevel2 = () => (
-    <div className="space-y-8">
-      <div className="bg-emerald-50 p-6 rounded-xl border-l-8 border-emerald-500 text-left">
-        <h2 className="text-3xl font-bold text-emerald-800 mb-2 flex items-center gap-2">
-          <Dna className="inline" /> Level 2: The Three Domains
-        </h2>
-        <p className="text-xl text-emerald-900 leading-relaxed">
-          Everything alive on Earth fits into one of 3 giant "boxes" called <strong>Domains</strong>. 
-          Tap a domain to see what makes it special!
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {domains.map(d => (
-          <button 
-            key={d.name}
-            onClick={() => setFeedback(`${d.name}: ${d.trait}`)}
-            className={`${d.color} p-10 rounded-3xl border-4 border-white shadow-xl hover:scale-105 transition-transform text-center flex flex-col items-center justify-center min-h-[160px]`}
-          >
-            <h3 className="text-4xl font-black">{d.name}</h3>
-            <span className="text-sm mt-2 font-bold opacity-70 uppercase tracking-wider">Click to Inspect</span>
-          </button>
-        ))}
-      </div>
-
-      <div className="bg-white p-10 rounded-3xl border-4 border-slate-100 shadow-inner min-h-[150px] flex items-center justify-center transition-all duration-300">
-        {feedback ? (
-          <p className="text-3xl font-bold text-slate-800 text-center leading-snug">
-            {feedback}
-          </p>
-        ) : (
-          <p className="text-2xl font-bold text-slate-400 italic text-center">
-            Tap a Domain box above to reveal its secrets!
-          </p>
-        )}
-      </div>
-
-      <div className="text-center">
-        <button onClick={nextLevel} className="bg-blue-600 text-white py-4 px-10 rounded-xl text-2xl font-bold shadow-lg hover:bg-blue-700 transform transition hover:scale-105">
-          Level 3: Meet the Nēnē →
-        </button>
-      </div>
-    </div>
-  );
-
-  const renderLevel3 = () => {
-    const isFinished = l3Current >= neneLevels.length;
-    const currentRank = !isFinished ? neneLevels[l3Current].rank : "Complete";
-
-    return (
-      <div className="space-y-8">
-        <div className="bg-amber-50 p-6 rounded-xl border-l-8 border-amber-500 text-left">
-          <h2 className="text-3xl font-bold text-amber-800 mb-2 flex items-center gap-2">
-            <Bird className="inline" /> Level 3: The Nēnē's Nested Boxes
-          </h2>
-          <p className="text-xl text-amber-900">
-            Classification gets more specific as you go down. Tap the correct name for each rank!
-          </p>
-        </div>
-
-        {!isFinished && (
-          <div className="flex flex-col md:flex-row gap-8 items-stretch">
-            <div className="w-full md:w-1/2 flex flex-col">
-              <div className="bg-white p-6 rounded-2xl border-4 border-slate-200 shadow-lg flex-grow">
-                <h3 className="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
-                   <Search size={24} className="text-blue-500" />
-                   Finding the <span className="text-blue-600 uppercase underline decoration-4 decoration-blue-200">{currentRank}</span>
-                </h3>
-                <div className="flex flex-wrap gap-3">
-                  {neneLevels.map((item, idx) => (
-                    <button
-                      key={`${item.name}-${idx}`}
-                      disabled={idx !== l3Current}
-                      onClick={() => {
-                        const correctItem = neneLevels[l3Current];
-                        setL3Current(l3Current + 1);
-                        setFeedback(correctItem.info);
-                        setSubFeedback(correctItem.meaning);
-                      }}
-                      className={`py-3 px-6 rounded-full text-xl font-bold transition-all ${
-                        idx < l3Current ? 'bg-green-100 text-green-700 opacity-50' : 
-                        idx === l3Current ? 'bg-blue-500 text-white scale-105 shadow-lg border-2 border-blue-200 animate-pulse' : 
-                        'bg-slate-100 text-slate-400'
-                      }`}
-                    >
-                      {item.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              
-              {/* Detailed Info Box */}
-              <div className={`mt-4 p-6 rounded-2xl border-2 transition-all duration-300 ${feedback ? 'bg-green-50 border-green-200' : 'bg-slate-50 border-transparent opacity-50'}`}>
-                {feedback ? (
-                  <div className="space-y-3">
-                    <div className="flex items-start gap-3">
-                      <Info className="text-green-600 mt-1 shrink-0" size={24} />
-                      <p className="text-xl font-bold text-green-800 leading-tight">{feedback}</p>
-                    </div>
-                    <div className="flex items-start gap-3 pt-2 border-t border-green-100">
-                      <BookOpen className="text-blue-600 mt-1 shrink-0" size={20} />
-                      <p className="text-lg text-blue-800 italic">{subFeedback}</p>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-lg text-slate-400 font-medium italic text-center">Tap a button above to learn what that level means!</p>
-                )}
-              </div>
+        <!-- Header / Progress Bar -->
+        <header class="bg-slate-800 p-6 flex items-center justify-between text-white">
+            <div class="flex items-center gap-3">
+                <i class="fas fa-border-all text-yellow-400 text-xl"></i>
+                <span class="text-2xl font-black uppercase tracking-tighter">Taxonomy Pro</span>
             </div>
-
-            <div className="w-full md:w-1/2 flex flex-col items-center">
-              <div className="relative w-full max-w-sm aspect-square bg-amber-100 rounded-full flex items-center justify-center border-8 border-amber-300 overflow-hidden shadow-inner">
-                 {l3Current > 0 ? (
-                   <div className="text-center p-4 w-full h-full flex flex-col items-center justify-center">
-                     <div className="text-7xl mb-4 drop-shadow-md">🪿</div>
-                     <div className="space-y-1 w-full flex flex-col items-center overflow-y-auto max-h-[70%] scrollbar-hide">
-                       {neneLevels.slice(0, l3Current).reverse().map((lv, i) => (
-                         <div key={lv.rank} className="text-sm font-bold bg-white/90 px-4 py-1.5 rounded-full shadow-sm w-5/6 border border-amber-200 flex justify-between items-center group">
-                           <span className="text-amber-600 text-[10px] uppercase tracking-tighter">{lv.rank}</span>
-                           <span className="text-slate-800">{lv.name}</span>
-                         </div>
-                       ))}
-                     </div>
-                   </div>
-                 ) : (
-                   <div className="text-slate-400 text-center px-8">
-                     <Boxes size={64} className="mx-auto mb-4 opacity-20" />
-                     <p className="text-lg font-bold">Pick the Domain to start nesting!</p>
-                   </div>
-                 )}
-              </div>
+            <div class="flex gap-2" id="progressBar">
+                <div class="w-12 h-3 rounded-full bg-slate-600 transition-colors duration-500" id="progress1"></div>
+                <div class="w-12 h-3 rounded-full bg-slate-600 transition-colors duration-500" id="progress2"></div>
+                <div class="w-12 h-3 rounded-full bg-slate-600 transition-colors duration-500" id="progress3"></div>
             </div>
-          </div>
-        )}
-
-        {isFinished && (
-          <div className="bg-green-600 text-white p-10 rounded-3xl text-center shadow-2xl animate-in fade-in zoom-in duration-500">
-            <h2 className="text-5xl font-black mb-4 flex items-center justify-center gap-4">
-              <CheckCircle2 size={60} /> YOU DID IT!
-            </h2>
-            <p className="text-2xl font-medium">You have successfully classified the Hawaiian Goose (Nēnē)!</p>
-            <div className="mt-6 p-4 bg-green-700 rounded-2xl text-xl font-bold tracking-wide italic">
-              Scientific Name: Branta sandvicensis
-            </div>
-            <button 
-              onClick={() => {setLevel(0); setL3Current(0); setL1Done([]); setFeedback(""); setSubFeedback("");}}
-              className="mt-8 bg-white text-green-600 py-4 px-12 rounded-2xl font-bold text-2xl hover:bg-slate-100 transition-colors shadow-lg"
-            >
-              Play Again
-            </button>
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  return (
-    <div className="min-h-screen bg-slate-50 font-sans p-4 md:p-8">
-      <div className="max-w-5xl mx-auto bg-white rounded-[40px] shadow-2xl overflow-hidden border-8 border-slate-100">
-        
-        {/* Navigation / Progress Bar */}
-        <header className="bg-slate-800 p-6 flex items-center justify-between text-white">
-          <div className="flex items-center gap-3">
-             <LayoutGrid className="text-yellow-400" />
-             <span className="text-2xl font-black uppercase tracking-tighter">Taxonomy Pro</span>
-          </div>
-          <div className="flex gap-2">
-            {[1, 2, 3].map(step => (
-              <div 
-                key={step} 
-                className={`w-12 h-3 rounded-full transition-colors duration-500 ${level >= step ? 'bg-green-400' : 'bg-slate-600'}`}
-              />
-            ))}
-          </div>
         </header>
 
-        {/* Level Content */}
-        <main className="p-8 md:p-12 min-h-[600px]">
-          {level === 0 && renderIntro()}
-          {level === 1 && renderLevel1()}
-          {level === 2 && renderLevel2()}
-          {level === 3 && renderLevel3()}
+        <!-- Main Content Area -->
+        <main class="p-8 md:p-12 min-h-[600px]">
+
+            <!-- Level 0: Intro -->
+            <div id="level0" class="flex flex-col items-center text-center space-y-8">
+                <div class="bg-yellow-100 p-8 rounded-full border-4 border-yellow-400">
+                    <i class="fas fa-search text-yellow-600 text-6xl"></i>
+                </div>
+                <h1 class="text-4xl md:text-5xl font-black text-slate-800">The Great Sorting Adventure</h1>
+                <p class="text-xl md:text-2xl text-slate-600 max-w-2xl leading-relaxed">
+                    Scientists are like detectives! They group living things together to understand how they are related.
+                    Are you ready to become a <strong>Taxonomist</strong>?
+                </p>
+                <button
+                    onclick="goToLevel(1)"
+                    class="bg-green-500 hover:bg-green-600 text-white text-2xl md:text-3xl font-bold py-6 px-12 rounded-2xl shadow-xl transform transition hover:scale-105 flex items-center gap-4"
+                >
+                    Start Learning <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+
+            <!-- Level 1: Sorting Your World -->
+            <div id="level1" class="hidden space-y-8">
+                <div class="bg-blue-50 p-6 rounded-xl border-l-8 border-blue-500 text-left">
+                    <h2 class="text-2xl md:text-3xl font-bold text-blue-800 mb-2 flex items-center gap-2">
+                        <i class="fas fa-home"></i> Level 1: Sorting Your World
+                    </h2>
+                    <p class="text-lg md:text-xl text-blue-900">
+                        Before we study animals, let's practice sorting things at home.
+                        Tap an item, then tap the right box!
+                    </p>
+                </div>
+
+                <div id="itemsContainer" class="flex flex-wrap gap-4 justify-center py-4">
+                    <!-- Items will be rendered here -->
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 md:gap-8 mt-8">
+                    <button
+                        onclick="dropItem('Kitchen')"
+                        id="kitchenBox"
+                        class="h-36 md:h-48 border-4 border-dashed border-slate-400 rounded-3xl flex flex-col items-center justify-center bg-white transition-colors"
+                    >
+                        <span class="text-xl md:text-3xl font-black text-slate-400 uppercase tracking-widest">Kitchen BOX</span>
+                        <span id="kitchenHint" class="text-sm text-blue-600 mt-2 font-bold animate-pulse-slow hidden">Place item here?</span>
+                    </button>
+                    <button
+                        onclick="dropItem('Bedroom')"
+                        id="bedroomBox"
+                        class="h-36 md:h-48 border-4 border-dashed border-slate-400 rounded-3xl flex flex-col items-center justify-center bg-white transition-colors"
+                    >
+                        <span class="text-xl md:text-3xl font-black text-slate-400 uppercase tracking-widest">Bedroom BOX</span>
+                        <span id="bedroomHint" class="text-sm text-blue-600 mt-2 font-bold animate-pulse-slow hidden">Place item here?</span>
+                    </button>
+                </div>
+
+                <div id="level1Next" class="mt-8 text-center hidden">
+                    <button onclick="goToLevel(2)" class="bg-green-500 text-white py-4 px-10 rounded-xl text-xl md:text-2xl font-bold shadow-lg hover:bg-green-600 transform transition hover:scale-105">
+                        Level 2: The 3 Big Domains <i class="fas fa-arrow-right ml-2"></i>
+                    </button>
+                </div>
+
+                <p id="level1Feedback" class="text-center text-xl font-bold text-orange-600 h-8"></p>
+            </div>
+
+            <!-- Level 2: The Three Domains -->
+            <div id="level2" class="hidden space-y-8">
+                <div class="bg-emerald-50 p-6 rounded-xl border-l-8 border-emerald-500 text-left">
+                    <h2 class="text-2xl md:text-3xl font-bold text-emerald-800 mb-2 flex items-center gap-2">
+                        <i class="fas fa-dna"></i> Level 2: The Three Domains
+                    </h2>
+                    <p class="text-lg md:text-xl text-emerald-900 leading-relaxed">
+                        Everything alive on Earth fits into one of 3 giant "boxes" called <strong>Domains</strong>.
+                        Tap a domain to see what makes it special!
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <button
+                        onclick="showDomainInfo('Bacteria', 'Tiny single cells that do not have a nucleus.')"
+                        class="bg-emerald-400 p-8 md:p-10 rounded-3xl border-4 border-white shadow-xl hover:scale-105 transition-transform text-center flex flex-col items-center justify-center min-h-[140px] md:min-h-[160px]"
+                    >
+                        <h3 class="text-3xl md:text-4xl font-black">Bacteria</h3>
+                        <span class="text-sm mt-2 font-bold opacity-70 uppercase tracking-wider">Click to Inspect</span>
+                    </button>
+                    <button
+                        onclick="showDomainInfo('Archaea', 'Single cells that often live in extreme heat or salt.')"
+                        class="bg-orange-400 p-8 md:p-10 rounded-3xl border-4 border-white shadow-xl hover:scale-105 transition-transform text-center flex flex-col items-center justify-center min-h-[140px] md:min-h-[160px]"
+                    >
+                        <h3 class="text-3xl md:text-4xl font-black">Archaea</h3>
+                        <span class="text-sm mt-2 font-bold opacity-70 uppercase tracking-wider">Click to Inspect</span>
+                    </button>
+                    <button
+                        onclick="showDomainInfo('Eukarya', 'Complex cells that have a Nucleus (this includes humans!)')"
+                        class="bg-sky-400 p-8 md:p-10 rounded-3xl border-4 border-white shadow-xl hover:scale-105 transition-transform text-center flex flex-col items-center justify-center min-h-[140px] md:min-h-[160px]"
+                    >
+                        <h3 class="text-3xl md:text-4xl font-black">Eukarya</h3>
+                        <span class="text-sm mt-2 font-bold opacity-70 uppercase tracking-wider">Click to Inspect</span>
+                    </button>
+                </div>
+
+                <div id="domainInfoBox" class="bg-white p-8 md:p-10 rounded-3xl border-4 border-slate-100 shadow-inner min-h-[120px] md:min-h-[150px] flex items-center justify-center transition-all duration-300">
+                    <p id="domainInfoText" class="text-xl md:text-2xl font-bold text-slate-400 italic text-center">
+                        Tap a Domain box above to reveal its secrets!
+                    </p>
+                </div>
+
+                <div class="text-center">
+                    <button onclick="goToLevel(3)" class="bg-blue-600 text-white py-4 px-10 rounded-xl text-xl md:text-2xl font-bold shadow-lg hover:bg-blue-700 transform transition hover:scale-105">
+                        Level 3: Meet the Nene <i class="fas fa-arrow-right ml-2"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Level 3: The Nene's Nested Boxes -->
+            <div id="level3" class="hidden space-y-8">
+                <div class="bg-amber-50 p-6 rounded-xl border-l-8 border-amber-500 text-left">
+                    <h2 class="text-2xl md:text-3xl font-bold text-amber-800 mb-2 flex items-center gap-2">
+                        <i class="fas fa-dove"></i> Level 3: The Nene's Nested Boxes
+                    </h2>
+                    <p class="text-lg md:text-xl text-amber-900">
+                        Classification gets more specific as you go down. Tap the correct name for each rank!
+                    </p>
+                </div>
+
+                <div id="level3Content" class="flex flex-col md:flex-row gap-8 items-stretch">
+                    <div class="w-full md:w-1/2 flex flex-col">
+                        <div class="bg-white p-6 rounded-2xl border-4 border-slate-200 shadow-lg flex-grow">
+                            <h3 class="text-xl md:text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                                <i class="fas fa-search text-blue-500"></i>
+                                Finding the <span id="currentRankName" class="text-blue-600 uppercase underline decoration-4 decoration-blue-200">Domain</span>
+                            </h3>
+                            <div id="neneButtons" class="flex flex-wrap gap-3">
+                                <!-- Nene taxonomy buttons will be rendered here -->
+                            </div>
+                        </div>
+
+                        <!-- Detailed Info Box -->
+                        <div id="neneInfoBox" class="mt-4 p-6 rounded-2xl border-2 bg-slate-50 border-transparent opacity-50 transition-all duration-300">
+                            <p class="text-lg text-slate-400 font-medium italic text-center">Tap a button above to learn what that level means!</p>
+                        </div>
+                    </div>
+
+                    <div class="w-full md:w-1/2 flex flex-col items-center">
+                        <div class="relative w-full max-w-sm aspect-square bg-amber-100 rounded-full flex items-center justify-center border-8 border-amber-300 overflow-hidden shadow-inner">
+                            <div id="neneDisplay" class="text-slate-400 text-center px-8">
+                                <i class="fas fa-boxes text-6xl mx-auto mb-4 opacity-20"></i>
+                                <p class="text-lg font-bold">Pick the Domain to start nesting!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Completion Screen -->
+                <div id="level3Complete" class="hidden bg-green-600 text-white p-8 md:p-10 rounded-3xl text-center shadow-2xl">
+                    <h2 class="text-3xl md:text-5xl font-black mb-4 flex items-center justify-center gap-4">
+                        <i class="fas fa-check-circle"></i> YOU DID IT!
+                    </h2>
+                    <p class="text-xl md:text-2xl font-medium">You have successfully classified the Hawaiian Goose (Nene)!</p>
+                    <div class="mt-6 p-4 bg-green-700 rounded-2xl text-lg md:text-xl font-bold tracking-wide italic">
+                        Scientific Name: Branta sandvicensis
+                    </div>
+                    <button
+                        onclick="resetGame()"
+                        class="mt-8 bg-white text-green-600 py-4 px-12 rounded-2xl font-bold text-xl md:text-2xl hover:bg-slate-100 transition-colors shadow-lg"
+                    >
+                        Play Again
+                    </button>
+                </div>
+            </div>
+
         </main>
 
-        {/* Footer Info */}
-        <footer className="bg-slate-50 p-6 border-t-2 border-slate-100 flex items-center gap-4 text-slate-500">
-          <Info size={24} className="flex-shrink-0" />
-          <p className="text-lg font-medium italic">
-            Did you know? Taxonomy comes from Greek words meaning "arrangement" and "method."
-          </p>
+        <!-- Footer -->
+        <footer class="bg-slate-50 p-6 border-t-2 border-slate-100 flex items-center gap-4 text-slate-500">
+            <i class="fas fa-info-circle text-2xl flex-shrink-0"></i>
+            <p class="text-base md:text-lg font-medium italic">
+                Did you know? Taxonomy comes from Greek words meaning "arrangement" and "method."
+            </p>
         </footer>
-      </div>
     </div>
-  );
-};
 
-export default App;
+    <script>
+        // Game State
+        let currentLevel = 0;
+        let selectedItem = null;
+        let completedItems = [];
+        let neneCurrentStep = 0;
+
+        // Level 1 Data
+        const items = [
+            { id: 1, name: "Spoon", category: "Kitchen", color: "bg-blue-200" },
+            { id: 2, name: "Pillow", category: "Bedroom", color: "bg-purple-200" },
+            { id: 3, name: "Fork", category: "Kitchen", color: "bg-blue-200" },
+            { id: 4, name: "Blanket", category: "Bedroom", color: "bg-purple-200" }
+        ];
+
+        // Level 3 Data - Nene Taxonomy
+        const neneLevels = [
+            {
+                rank: "Domain",
+                name: "Eukarya",
+                info: "The broadest group. Includes everything with complex cells.",
+                meaning: "From Greek 'eu' (true) and 'karyon' (nut/nucleus)."
+            },
+            {
+                rank: "Kingdom",
+                name: "Animalia",
+                info: "Multicellular organisms that breathe oxygen and consume organic material.",
+                meaning: "Latin for 'having breath' or 'living being'."
+            },
+            {
+                rank: "Phylum",
+                name: "Chordata",
+                info: "Animals that have a spinal cord or backbone.",
+                meaning: "Latin 'chorda' meaning 'cord'."
+            },
+            {
+                rank: "Class",
+                name: "Aves",
+                info: "The group for all birds—warm-blooded, feathered, and egg-laying.",
+                meaning: "Latin for 'bird'."
+            },
+            {
+                rank: "Order",
+                name: "Anseriformes",
+                info: "Waterfowl like ducks, geese, and swans.",
+                meaning: "Latin 'anser' (goose) + 'formis' (shape)."
+            },
+            {
+                rank: "Family",
+                name: "Anatidae",
+                info: "The specific family of water birds that can swim on the surface.",
+                meaning: "From Latin 'anas', meaning 'duck'."
+            },
+            {
+                rank: "Genus",
+                name: "Branta",
+                info: "A group of 'black geese' with dark plumage.",
+                meaning: "Old Norse/Latinized word for 'burnt' (referring to their dark color)."
+            },
+            {
+                rank: "Species",
+                name: "sandvicensis",
+                info: "The specific name for the Hawaiian Goose.",
+                meaning: "Refers to the 'Sandwich Islands', the old name for Hawaii!"
+            }
+        ];
+
+        // Initialize the game
+        function init() {
+            renderLevel1Items();
+            renderNeneButtons();
+        }
+
+        // Navigate to a level
+        function goToLevel(level) {
+            // Hide all levels
+            document.getElementById('level0').classList.add('hidden');
+            document.getElementById('level1').classList.add('hidden');
+            document.getElementById('level2').classList.add('hidden');
+            document.getElementById('level3').classList.add('hidden');
+
+            // Show requested level
+            document.getElementById('level' + level).classList.remove('hidden');
+
+            // Update progress bar
+            for (let i = 1; i <= 3; i++) {
+                const bar = document.getElementById('progress' + i);
+                if (i <= level) {
+                    bar.classList.remove('bg-slate-600');
+                    bar.classList.add('bg-green-400');
+                } else {
+                    bar.classList.remove('bg-green-400');
+                    bar.classList.add('bg-slate-600');
+                }
+            }
+
+            currentLevel = level;
+        }
+
+        // Level 1: Render items
+        function renderLevel1Items() {
+            const container = document.getElementById('itemsContainer');
+            container.innerHTML = '';
+
+            items.forEach(item => {
+                if (!completedItems.includes(item.id)) {
+                    const btn = document.createElement('button');
+                    btn.className = `${item.color} border-4 border-slate-400 p-4 md:p-6 rounded-xl text-xl md:text-2xl font-bold transition-all`;
+                    btn.textContent = item.name;
+                    btn.onclick = () => selectItem(item);
+                    btn.id = 'item-' + item.id;
+                    container.appendChild(btn);
+                }
+            });
+        }
+
+        // Level 1: Select an item
+        function selectItem(item) {
+            selectedItem = item;
+
+            // Update visual selection
+            items.forEach(i => {
+                const el = document.getElementById('item-' + i.id);
+                if (el) {
+                    if (i.id === item.id) {
+                        el.classList.remove('border-slate-400');
+                        el.classList.add('border-yellow-500', 'scale-110', 'shadow-lg');
+                    } else {
+                        el.classList.remove('border-yellow-500', 'scale-110', 'shadow-lg');
+                        el.classList.add('border-slate-400');
+                    }
+                }
+            });
+
+            // Show hints on boxes
+            document.getElementById('kitchenHint').classList.remove('hidden');
+            document.getElementById('bedroomHint').classList.remove('hidden');
+            document.getElementById('kitchenBox').classList.add('hover:bg-yellow-50', 'border-yellow-400');
+            document.getElementById('bedroomBox').classList.add('hover:bg-yellow-50', 'border-yellow-400');
+        }
+
+        // Level 1: Drop item into box
+        function dropItem(target) {
+            if (!selectedItem) return;
+
+            const feedback = document.getElementById('level1Feedback');
+
+            if (selectedItem.category === target) {
+                completedItems.push(selectedItem.id);
+                feedback.textContent = "Great job! That belongs there.";
+                feedback.classList.remove('text-red-600');
+                feedback.classList.add('text-green-600');
+                selectedItem = null;
+                renderLevel1Items();
+
+                // Hide hints
+                document.getElementById('kitchenHint').classList.add('hidden');
+                document.getElementById('bedroomHint').classList.add('hidden');
+                document.getElementById('kitchenBox').classList.remove('hover:bg-yellow-50', 'border-yellow-400');
+                document.getElementById('bedroomBox').classList.remove('hover:bg-yellow-50', 'border-yellow-400');
+
+                // Check if level complete
+                if (completedItems.length === 4) {
+                    document.getElementById('level1Next').classList.remove('hidden');
+                    feedback.textContent = "Amazing! You sorted everything!";
+                }
+            } else {
+                feedback.textContent = "Not quite. Try another box!";
+                feedback.classList.remove('text-green-600');
+                feedback.classList.add('text-orange-600');
+            }
+        }
+
+        // Level 2: Show domain info
+        function showDomainInfo(name, trait) {
+            const infoText = document.getElementById('domainInfoText');
+            infoText.textContent = name + ": " + trait;
+            infoText.classList.remove('text-slate-400', 'italic');
+            infoText.classList.add('text-slate-800');
+        }
+
+        // Level 3: Render Nene buttons
+        function renderNeneButtons() {
+            const container = document.getElementById('neneButtons');
+            container.innerHTML = '';
+
+            neneLevels.forEach((item, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'py-3 px-4 md:px-6 rounded-full text-lg md:text-xl font-bold transition-all';
+                btn.textContent = item.name;
+
+                if (idx < neneCurrentStep) {
+                    btn.className += ' bg-green-100 text-green-700 opacity-50';
+                    btn.disabled = true;
+                } else if (idx === neneCurrentStep) {
+                    btn.className += ' bg-blue-500 text-white scale-105 shadow-lg border-2 border-blue-200 animate-pulse-slow';
+                    btn.onclick = () => advanceNene(idx);
+                } else {
+                    btn.className += ' bg-slate-100 text-slate-400';
+                    btn.disabled = true;
+                }
+
+                container.appendChild(btn);
+            });
+
+            // Update current rank name
+            if (neneCurrentStep < neneLevels.length) {
+                document.getElementById('currentRankName').textContent = neneLevels[neneCurrentStep].rank;
+            }
+        }
+
+        // Level 3: Advance to next taxonomy level
+        function advanceNene(idx) {
+            const item = neneLevels[idx];
+            neneCurrentStep++;
+
+            // Update info box
+            const infoBox = document.getElementById('neneInfoBox');
+            infoBox.classList.remove('bg-slate-50', 'border-transparent', 'opacity-50');
+            infoBox.classList.add('bg-green-50', 'border-green-200');
+            infoBox.innerHTML = `
+                <div class="space-y-3">
+                    <div class="flex items-start gap-3">
+                        <i class="fas fa-info-circle text-green-600 mt-1 flex-shrink-0 text-xl"></i>
+                        <p class="text-lg md:text-xl font-bold text-green-800 leading-tight">${item.info}</p>
+                    </div>
+                    <div class="flex items-start gap-3 pt-2 border-t border-green-100">
+                        <i class="fas fa-book-open text-blue-600 mt-1 flex-shrink-0"></i>
+                        <p class="text-base md:text-lg text-blue-800 italic">${item.meaning}</p>
+                    </div>
+                </div>
+            `;
+
+            // Update Nene display
+            updateNeneDisplay();
+
+            // Check if complete
+            if (neneCurrentStep >= neneLevels.length) {
+                document.getElementById('level3Content').classList.add('hidden');
+                document.getElementById('level3Complete').classList.remove('hidden');
+            } else {
+                renderNeneButtons();
+            }
+        }
+
+        // Level 3: Update the Nene visual display
+        function updateNeneDisplay() {
+            const display = document.getElementById('neneDisplay');
+
+            if (neneCurrentStep > 0) {
+                let html = '<div class="text-center p-4 w-full h-full flex flex-col items-center justify-center">';
+                html += '<div class="text-6xl md:text-7xl mb-4 drop-shadow-md">&#129666;</div>';
+                html += '<div class="space-y-1 w-full flex flex-col items-center overflow-y-auto max-h-[70%]">';
+
+                // Show completed levels in reverse order
+                for (let i = neneCurrentStep - 1; i >= 0; i--) {
+                    const lv = neneLevels[i];
+                    html += `
+                        <div class="text-xs md:text-sm font-bold bg-white/90 px-3 md:px-4 py-1.5 rounded-full shadow-sm w-5/6 border border-amber-200 flex justify-between items-center">
+                            <span class="text-amber-600 text-[10px] uppercase tracking-tighter">${lv.rank}</span>
+                            <span class="text-slate-800">${lv.name}</span>
+                        </div>
+                    `;
+                }
+
+                html += '</div></div>';
+                display.innerHTML = html;
+            }
+        }
+
+        // Reset the entire game
+        function resetGame() {
+            currentLevel = 0;
+            selectedItem = null;
+            completedItems = [];
+            neneCurrentStep = 0;
+
+            // Reset Level 1
+            document.getElementById('level1Feedback').textContent = '';
+            document.getElementById('level1Next').classList.add('hidden');
+            document.getElementById('kitchenHint').classList.add('hidden');
+            document.getElementById('bedroomHint').classList.add('hidden');
+
+            // Reset Level 2
+            const domainText = document.getElementById('domainInfoText');
+            domainText.textContent = 'Tap a Domain box above to reveal its secrets!';
+            domainText.classList.add('text-slate-400', 'italic');
+            domainText.classList.remove('text-slate-800');
+
+            // Reset Level 3
+            document.getElementById('level3Content').classList.remove('hidden');
+            document.getElementById('level3Complete').classList.add('hidden');
+            document.getElementById('neneInfoBox').className = 'mt-4 p-6 rounded-2xl border-2 bg-slate-50 border-transparent opacity-50 transition-all duration-300';
+            document.getElementById('neneInfoBox').innerHTML = '<p class="text-lg text-slate-400 font-medium italic text-center">Tap a button above to learn what that level means!</p>';
+            document.getElementById('neneDisplay').innerHTML = `
+                <div class="text-slate-400 text-center px-8">
+                    <i class="fas fa-boxes text-6xl mx-auto mb-4 opacity-20"></i>
+                    <p class="text-lg font-bold">Pick the Domain to start nesting!</p>
+                </div>
+            `;
+
+            // Reset progress bar
+            for (let i = 1; i <= 3; i++) {
+                const bar = document.getElementById('progress' + i);
+                bar.classList.remove('bg-green-400');
+                bar.classList.add('bg-slate-600');
+            }
+
+            // Re-render and show intro
+            renderLevel1Items();
+            renderNeneButtons();
+            goToLevel(0);
+        }
+
+        // Start the app
+        init();
+    </script>
+</body>
+</html>
