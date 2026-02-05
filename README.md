@@ -4,7 +4,7 @@ An interactive educational learning hub featuring standalone HTML-based activiti
 
 ## Overview
 
-BolesBook is a collection of 8 educational web applications designed to support learning through engaging, accessible interfaces. Each activity is self-contained and requires no installation or build process - just open in a browser!
+BolesBook is a collection of 9 educational web applications designed to support learning through engaging, accessible interfaces. Each activity is self-contained and requires no installation or build process - just open in a browser!
 
 ## Getting Started
 
@@ -38,6 +38,7 @@ Alternatively, open any individual `.html` file directly to access that specific
 |----------|------|-------------|
 | **Indy Living** | `IndyLiving.HTML` | Practice transit planning, budget math, and sensory management |
 | **Savanna Squad** | `SavannaSquad.html` | Adventure game teaching self-regulation strategies |
+| **Moodity** | `Moodity.html` | Track and reflect on moods with an interactive mood tracker |
 
 ## Technology Stack
 
@@ -80,7 +81,8 @@ bolesbook/
 ├── readingcomp.html     # Reading comprehension support
 ├── decodingskills.html  # Phonics decoding assessment
 ├── spelling.html        # Spelling practice
-└── lifetoScale.html     # Hierarchy of life explorer
+├── lifetoScale.html     # Hierarchy of life explorer
+└── Moodity.html         # Mood tracker
 ```
 
 ## Contributing

@@ -1,0 +1,2500 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moodity Tracker</title>
+
+    <script src="https://cdn.tailwindcss.com" onerror="console.error('Tailwind CSS failed to load.')"></script>
+    <script src="https://unpkg.com/lucide@latest" onerror="window.lucide = { createIcons: function(){} }; console.error('Lucide icons failed to load.')"></script>
+
+    <script>
+        if (typeof tailwind !== 'undefined') {
+            tailwind.config = { darkMode: 'class' }
+        }
+    </script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            transition: background-color 0.5s ease;
+        }
+
+        .size-small { font-size: 14px; }
+        .size-medium { font-size: 16px; }
+        .size-large { font-size: 18px; }
+
+        .custom-range {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: #334155;
+            outline: none;
+        }
+        .custom-range::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #6366f1;
+            cursor: pointer;
+            border: 3px solid #0f172a;
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .custom-range::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.6);
+        }
+        .custom-range::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #6366f1;
+            cursor: pointer;
+            border: 3px solid #0f172a;
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+        }
+        .custom-range:focus { outline: 2px solid #6366f1; outline-offset: 2px; }
+
+        /* Settings tab button active bulge */
+        .settings-tab-active {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        }
+
+        /* Calendar/date input styling */
+        input[type="date"] {
+            color-scheme: dark;
+        }
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            cursor: pointer;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+        input[type="date"]::-webkit-calendar-picker-indicator:hover {
+            opacity: 1;
+        }
+
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .thick-divider {
+            width: 6px;
+            background: rgba(51, 65, 85, 0.6);
+            border-radius: 3px;
+            margin: 1.5rem 0;
+        }
+
+        button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+            outline: 2px solid #6366f1;
+            outline-offset: 2px;
+        }
+
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: #6366f1;
+            color: white;
+            padding: 8px 16px;
+            z-index: 100;
+            border-radius: 0 0 8px 0;
+        }
+        .skip-link:focus { top: 0; }
+
+        @keyframes toast-in { from { opacity: 0; transform: translate(-50%, 20px); } to { opacity: 1; transform: translate(-50%, 0); } }
+        @keyframes toast-out { from { opacity: 1; } to { opacity: 0; transform: translate(-50%, -20px); } }
+        .toast-enter { animation: toast-in 0.3s ease-out; }
+        .toast-exit { animation: toast-out 0.3s ease-in forwards; }
+
+        .settings-section {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .settings-section h3 {
+            font-size: 0.75rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #6366f1;
+            margin-bottom: 1rem;
+        }
+
+        /* Icon picker grid */
+        .icon-picker-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 8px;
+            background: #1e293b;
+            border-radius: 12px;
+            border: 1px solid #334155;
+        }
+        .icon-picker-grid button {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            transition: all 0.15s;
+        }
+        .icon-picker-grid button:hover {
+            background: #334155;
+        }
+        .icon-picker-grid button.selected {
+            background: #6366f1;
+            color: white;
+        }
+
+        /* Key-turn animation for +/- buttons */
+        @keyframes key-turn-clockwise {
+            0% { transform: rotate(0deg); }
+            50% { transform: rotate(45deg); }
+            100% { transform: rotate(0deg); }
+        }
+        @keyframes key-turn-counter {
+            0% { transform: rotate(0deg); }
+            50% { transform: rotate(-45deg); }
+            100% { transform: rotate(0deg); }
+        }
+        .key-turn-cw {
+            animation: key-turn-clockwise 0.3s ease-in-out;
+        }
+        .key-turn-ccw {
+            animation: key-turn-counter 0.3s ease-in-out;
+        }
+
+        /* Hotkey hints */
+        .hotkey-hint {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            min-width: 16px;
+            height: 16px;
+            padding: 0 3px;
+            background: rgba(148, 163, 184, 0.3);
+            color: #94a3b8;
+            font-size: 8px;
+            font-weight: 700;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-transform: uppercase;
+            pointer-events: none;
+        }
+
+        /* Toolbar hotkey hints - positioned above */
+        .toolbar-hint {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            margin-bottom: 4px;
+            min-width: 16px;
+            height: 16px;
+            padding: 0 4px;
+            background: rgba(148, 163, 184, 0.3);
+            color: #94a3b8;
+            font-size: 8px;
+            font-weight: 700;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-transform: uppercase;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        /* Light Mode - Burnt Orange Theme */
+        body.light-mode {
+            background: #faf6f1;
+            color: #3d3024;
+        }
+
+        .light-mode .bg-slate-950 { background: #faf6f1; }
+        .light-mode .bg-slate-900 { background: #f5ede3; }
+        .light-mode .bg-slate-900\/50 { background: rgba(245, 237, 227, 0.5); }
+        .light-mode .bg-slate-800 { background: #ebe1d4; }
+        .light-mode .bg-slate-800\/50 { background: rgba(235, 225, 212, 0.5); }
+
+        .light-mode .text-slate-200 { color: #3d3024; }
+        .light-mode .text-slate-300 { color: #4a3c2e; }
+        .light-mode .text-slate-400 { color: #6b5a48; }
+        .light-mode .text-slate-500 { color: #8b7a68; }
+        .light-mode .text-slate-600 { color: #a69280; }
+        .light-mode .text-slate-700 { color: #c4b5a5; }
+        .light-mode .text-white { color: #2d2418; }
+
+        .light-mode .border-slate-800 { border-color: #ddd2c4; }
+        .light-mode .border-slate-700 { border-color: #cfc3b3; }
+
+        .light-mode .bg-indigo-600 { background: #c56a35; }
+        .light-mode .bg-indigo-500\/10 { background: rgba(197, 106, 53, 0.1); }
+        .light-mode .bg-indigo-500\/20 { background: rgba(197, 106, 53, 0.2); }
+        .light-mode .text-indigo-400 { color: #c56a35; }
+        .light-mode .text-indigo-500 { color: #b85d2a; }
+        .light-mode .border-indigo-500 { border-color: #c56a35; }
+        .light-mode .border-indigo-500\/20 { border-color: rgba(197, 106, 53, 0.2); }
+        .light-mode .border-indigo-500\/30 { border-color: rgba(197, 106, 53, 0.3); }
+
+        .light-mode .hover\:text-indigo-400:hover { color: #c56a35; }
+        .light-mode .hover\:bg-indigo-500\/20:hover { background: rgba(197, 106, 53, 0.2); }
+
+        .light-mode .shadow-indigo-500\/20 { --tw-shadow-color: rgba(197, 106, 53, 0.2); }
+
+        .light-mode .glass-card {
+            background: rgba(250, 246, 241, 0.9);
+            border-color: rgba(197, 106, 53, 0.1);
+        }
+
+        .light-mode .settings-section {
+            background: rgba(245, 237, 227, 0.7);
+            border-color: rgba(197, 106, 53, 0.1);
+        }
+        .light-mode .settings-section h3 { color: #c56a35; }
+
+        .light-mode .custom-range { background: #ddd2c4; }
+        .light-mode .custom-range::-webkit-slider-thumb {
+            background: #c56a35;
+            border-color: #faf6f1;
+            box-shadow: 0 0 15px rgba(197, 106, 53, 0.4);
+        }
+        .light-mode .custom-range::-moz-range-thumb {
+            background: #c56a35;
+            border-color: #faf6f1;
+            box-shadow: 0 0 15px rgba(197, 106, 53, 0.4);
+        }
+
+        .light-mode input[type="date"] { color-scheme: light; }
+        .light-mode input[type="date"]::-webkit-calendar-picker-indicator { filter: none; }
+
+        .light-mode .hotkey-hint,
+        .light-mode .toolbar-hint {
+            background: rgba(139, 122, 104, 0.2);
+            color: #6b5a48;
+        }
+
+        .light-mode .settings-tab-active {
+            box-shadow: 0 4px 15px rgba(197, 106, 53, 0.3);
+        }
+
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-200 min-h-screen">
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <div id="app" class="container mx-auto max-w-7xl min-h-screen p-6 lg:p-12 pb-24" role="application" aria-label="Moodity Mood Tracker">
+    </div>
+
+    <!-- Icon Picker Modal -->
+    <div id="icon-picker-modal" class="fixed inset-0 bg-black/70 z-50 hidden items-center justify-center p-4">
+        <div class="bg-slate-900 rounded-2xl p-6 max-w-md w-full border border-slate-700 shadow-2xl">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-black text-white uppercase">Choose Icon</h3>
+                <button id="close-icon-picker" class="p-2 text-slate-400 hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div id="icon-picker-grid" class="icon-picker-grid"></div>
+        </div>
+    </div>
+
+    <!-- Quick Comment Popup (non-intrusive bottom bar) -->
+    <div id="quick-comment-popup" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 hidden max-w-sm w-full px-4">
+        <div class="bg-slate-900/95 backdrop-blur rounded-xl p-3 border border-slate-700 shadow-xl flex items-center gap-2">
+            <input id="quick-comment-input" type="text"
+                placeholder="Add note (Enter to save, Esc to skip)..."
+                class="flex-1 px-3 py-2 bg-slate-800 text-white text-sm rounded-lg border border-slate-700 focus:border-indigo-500 outline-none placeholder:text-slate-600"
+                maxlength="500">
+            <button id="save-comment-btn" class="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-500 transition-colors" title="Save">
+                <i data-lucide="check" class="w-4 h-4"></i>
+            </button>
+            <button id="close-comment-popup" class="p-2 text-slate-500 hover:text-white transition-colors" title="Skip">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // ===========================================
+        // UTILITY FUNCTIONS
+        // ===========================================
+
+        function escapeHtml(text) {
+            if (typeof text !== 'string') return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func(...args), wait);
+            };
+        }
+
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+
+        function isValidDate(dateStr) {
+            if (typeof dateStr !== 'string') return false;
+            const regex = /^\d{4}-\d{2}-\d{2}$/;
+            if (!regex.test(dateStr)) return false;
+            const date = new Date(dateStr);
+            return date instanceof Date && !isNaN(date);
+        }
+
+        function parseDateSafe(dateStr) {
+            if (!isValidDate(dateStr)) {
+                const now = new Date();
+                return { year: now.getFullYear(), month: now.getMonth() + 1, day: now.getDate() };
+            }
+            const [y, m, d] = dateStr.split('-').map(Number);
+            return { year: y, month: m, day: d };
+        }
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // ===========================================
+        // SOUND EFFECTS
+        // ===========================================
+
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playClick(type = 'soft') {
+            try {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+
+                if (type === 'soft') {
+                    oscillator.frequency.value = 600;
+                    gainNode.gain.setValueAtTime(0.08, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.08);
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.08);
+                } else if (type === 'success') {
+                    oscillator.frequency.value = 800;
+                    gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.15);
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.15);
+                } else if (type === 'toggle') {
+                    oscillator.frequency.value = 500;
+                    oscillator.type = 'sine';
+                    gainNode.gain.setValueAtTime(0.06, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.05);
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.05);
+                }
+            } catch (e) {
+                // Audio not supported or blocked
+            }
+        }
+
+        // ===========================================
+        // AVAILABLE ICONS
+        // ===========================================
+
+        const AVAILABLE_ICONS = [
+            'users', 'layout', 'home', 'check-square', 'mouse-pointer-2',
+            'heart', 'star', 'zap', 'target', 'award', 'book', 'briefcase',
+            'calendar', 'clock', 'compass', 'edit', 'eye', 'flag', 'folder',
+            'gift', 'globe', 'headphones', 'image', 'key', 'layers', 'link',
+            'list', 'lock', 'mail', 'map', 'mic', 'music', 'paperclip',
+            'pen-tool', 'phone', 'play', 'plus', 'printer', 'search', 'send',
+            'settings', 'shield', 'shopping-cart', 'smile', 'speaker', 'sun',
+            'thumbs-up', 'trash', 'trending-up', 'truck', 'tv', 'umbrella',
+            'user', 'video', 'volume-2', 'wifi', 'wind', 'activity', 'anchor',
+            'aperture', 'battery', 'bell', 'bluetooth', 'box', 'camera',
+            'cast', 'chrome', 'clipboard', 'cloud', 'code', 'coffee', 'cpu',
+            'credit-card', 'database', 'disc', 'dollar-sign', 'download',
+            'droplet', 'feather', 'file', 'film', 'filter', 'flame', 'frown',
+            'meh', 'smile', 'angry', 'laugh', 'brain', 'hand', 'footprints'
+        ];
+
+        // ===========================================
+        // DEFAULT SETTINGS
+        // ===========================================
+
+        const DEFAULT_SETTINGS = {
+            uiSize: 'medium',
+            appTitle: 'MOODITY',
+            lightMode: false,
+            showHotkeyHints: false,
+            hotkeysEnabled: true,
+            skills: [
+                { id: 'skill-1', name: 'Social', icon: 'users' },
+                { id: 'skill-2', name: 'Org', icon: 'layout' },
+                { id: 'skill-3', name: 'Indy', icon: 'home' },
+                { id: 'skill-4', name: 'Task', icon: 'check-square' },
+                { id: 'skill-5', name: 'Motor', icon: 'mouse-pointer-2' }
+            ],
+            moods: [
+                { id: 'mood-1', name: 'happy', icon: 'sun', label: 'Happy' },
+                { id: 'mood-2', name: 'neutral', icon: 'cloud', label: 'Neutral' },
+                { id: 'mood-3', name: 'struggling', icon: 'cloud-lightning', label: 'Struggling' }
+            ],
+            sessionPhases: [
+                {
+                    id: 'phase-1',
+                    title: 'Emotional Baseline',
+                    type: 'mood-arousal',
+                    arousalLabel: 'Intensity',
+                    guidingQuestion: 'How are you feeling right now? Select your current mood and rate its intensity.',
+                    arousalMin: 1,
+                    arousalMax: 5
+                },
+                {
+                    id: 'phase-2',
+                    title: 'Social Interaction',
+                    type: 'toggles',
+                    guidingQuestion: 'Think about your social interactions. Did you engage in back-and-forth conversation? Connect positively with others?',
+                    toggles: [
+                        { id: 'toggle-1', label: 'Reciprocal Conversation', key: 'reciprocalConversation' },
+                        { id: 'toggle-2', label: 'Positive Peer Connection', key: 'peerConnection' },
+                        { id: 'toggle-3', label: 'Teacher/Staff Dependency', key: 'teacherDependency' }
+                    ]
+                },
+                {
+                    id: 'phase-3',
+                    title: 'Executive Function',
+                    type: 'toggles',
+                    guidingQuestion: 'Consider your focus and organization. Were you able to stay on task? Did you manage your materials and time well?',
+                    toggles: [
+                        { id: 'toggle-4', label: 'Organizational Quality', key: 'organizationalQuality' },
+                        { id: 'toggle-5', label: 'Task Persistence', key: 'taskPersistence' }
+                    ]
+                },
+                {
+                    id: 'phase-4',
+                    title: 'Session Notes',
+                    type: 'notes-rating',
+                    guidingQuestion: 'How well did you regulate your emotions and responses? Add any context or details worth remembering.',
+                    ratingLabel: 'Internal Regulation Rating',
+                    ratingMin: 0,
+                    ratingMax: 3,
+                    notesPlaceholder: 'Narrative context...'
+                }
+            ],
+            timerPresets: [
+                { id: 'timer-1', label: '1m', seconds: 60 },
+                { id: 'timer-2', label: '3m', seconds: 180 },
+                { id: 'timer-3', label: '5m', seconds: 300 },
+                { id: 'timer-4', label: '10m', seconds: 600 }
+            ],
+            defaultTimer: 300
+        };
+
+        // ===========================================
+        // ACHIEVEMENTS SYSTEM
+        // ===========================================
+
+        const ACHIEVEMENTS = [
+            // Getting Started
+            { id: 'first_entry', name: 'First Steps', description: 'Log your first entry', icon: 'footprints', category: 'getting-started' },
+            { id: 'first_win', name: 'Winner', description: 'Log your first win', icon: 'trophy', category: 'getting-started' },
+            { id: 'first_struggle', name: 'Honest', description: 'Log your first struggle', icon: 'heart', category: 'getting-started' },
+            { id: 'first_deep_dive', name: 'Deep Thinker', description: 'Complete your first deep dive', icon: 'brain', category: 'getting-started' },
+            { id: 'use_timer', name: 'Time Keeper', description: 'Use the timer feature', icon: 'timer', category: 'getting-started' },
+            { id: 'customize_skill', name: 'Personal Touch', description: 'Customize a skill', icon: 'edit', category: 'getting-started' },
+
+            // Consistency
+            { id: 'entries_10', name: 'Getting Started', description: 'Log 10 entries', icon: 'star', category: 'consistency', threshold: 10 },
+            { id: 'entries_50', name: 'Building Habits', description: 'Log 50 entries', icon: 'flame', category: 'consistency', threshold: 50 },
+            { id: 'entries_100', name: 'Century', description: 'Log 100 entries', icon: 'award', category: 'consistency', threshold: 100 },
+            { id: 'entries_500', name: 'Dedicated', description: 'Log 500 entries', icon: 'gem', category: 'consistency', threshold: 500 },
+            { id: 'entries_1000', name: 'Legendary', description: 'Log 1000 entries', icon: 'crown', category: 'consistency', threshold: 1000 },
+
+            // Wins
+            { id: 'wins_10', name: 'On a Roll', description: 'Log 10 wins', icon: 'trending-up', category: 'wins', threshold: 10 },
+            { id: 'wins_50', name: 'Champion', description: 'Log 50 wins', icon: 'medal', category: 'wins', threshold: 50 },
+            { id: 'wins_100', name: 'Unstoppable', description: 'Log 100 wins', icon: 'zap', category: 'wins', threshold: 100 },
+
+            // Reflection
+            { id: 'deep_dives_5', name: 'Reflective', description: 'Complete 5 deep dives', icon: 'compass', category: 'reflection', threshold: 5 },
+            { id: 'deep_dives_25', name: 'Introspective', description: 'Complete 25 deep dives', icon: 'eye', category: 'reflection', threshold: 25 },
+            { id: 'deep_dives_100', name: 'Self-Aware', description: 'Complete 100 deep dives', icon: 'sun', category: 'reflection', threshold: 100 },
+            { id: 'add_notes_10', name: 'Note Taker', description: 'Add notes to 10 entries', icon: 'file-text', category: 'reflection', threshold: 10 },
+
+            // Explorer
+            { id: 'try_all_moods', name: 'Full Spectrum', description: 'Use all mood options', icon: 'palette', category: 'explorer' },
+            { id: 'try_all_skills', name: 'Well-Rounded', description: 'Log entries for all skills', icon: 'target', category: 'explorer' },
+            { id: 'export_data', name: 'Backup Pro', description: 'Export your data', icon: 'download', category: 'explorer' },
+            { id: 'use_hotkeys', name: 'Keyboard Ninja', description: 'Use keyboard shortcuts', icon: 'keyboard', category: 'explorer' },
+
+            // Special
+            { id: 'all_skills_one_day', name: 'Productive Day', description: 'Log all skills in one day', icon: 'calendar-check', category: 'special' },
+            { id: 'streak_3', name: 'Three-peat', description: '3 day logging streak', icon: 'flame', category: 'special', threshold: 3 },
+            { id: 'streak_7', name: 'Week Warrior', description: '7 day logging streak', icon: 'shield', category: 'special', threshold: 7 },
+            { id: 'streak_30', name: 'Monthly Master', description: '30 day logging streak', icon: 'rocket', category: 'special', threshold: 30 },
+        ];
+
+        function loadAchievements() {
+            try {
+                const stored = localStorage.getItem('moodity_achievements');
+                if (!stored) return { unlocked: [], stats: { hotkeyUsed: false, exportUsed: false, skillsCustomized: [] } };
+                return JSON.parse(stored);
+            } catch (e) {
+                return { unlocked: [], stats: { hotkeyUsed: false, exportUsed: false, skillsCustomized: [] } };
+            }
+        }
+
+        function saveAchievements(achievements) {
+            try {
+                localStorage.setItem('moodity_achievements', JSON.stringify(achievements));
+            } catch (e) {
+                console.error('Failed to save achievements:', e);
+            }
+        }
+
+        function unlockAchievement(id) {
+            const achievements = loadAchievements();
+            if (achievements.unlocked.includes(id)) return false;
+
+            const achievement = ACHIEVEMENTS.find(a => a.id === id);
+            if (!achievement) return false;
+
+            achievements.unlocked.push(id);
+            achievements[id + '_date'] = new Date().toISOString();
+            saveAchievements(achievements);
+
+            // Show special toast
+            showAchievementToast(achievement);
+            return true;
+        }
+
+        function showAchievementToast(achievement) {
+            if (activeToast) {
+                activeToast.remove();
+                activeToast = null;
+            }
+
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-10 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-500 to-orange-500 text-white px-6 py-4 rounded-2xl shadow-2xl z-50 toast-enter flex items-center gap-3';
+            toast.setAttribute('role', 'status');
+            toast.innerHTML = `
+                <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                    <i data-lucide="${achievement.icon}" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <div class="text-[9px] font-bold uppercase tracking-widest opacity-80">Achievement Unlocked!</div>
+                    <div class="font-black text-sm">${escapeHtml(achievement.name)}</div>
+                </div>
+            `;
+            document.body.appendChild(toast);
+            activeToast = toast;
+
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+
+            setTimeout(() => {
+                toast.classList.remove('toast-enter');
+                toast.classList.add('toast-exit');
+                setTimeout(() => { toast.remove(); activeToast = null; }, 300);
+            }, 3500);
+        }
+
+        function checkAchievements() {
+            const achievements = loadAchievements();
+            const history = state.history;
+
+            // Count stats
+            const totalEntries = history.length;
+            const wins = history.filter(h => h.status === 'pos').length;
+            const struggles = history.filter(h => h.status === 'neg').length;
+            const deepDives = history.filter(h => !h.quickEntry).length;
+            const notedEntries = history.filter(h => h.notes && h.notes.length > 20).length;
+
+            // Getting Started
+            if (totalEntries >= 1) unlockAchievement('first_entry');
+            if (wins >= 1) unlockAchievement('first_win');
+            if (struggles >= 1) unlockAchievement('first_struggle');
+            if (deepDives >= 1) unlockAchievement('first_deep_dive');
+
+            // Consistency milestones
+            if (totalEntries >= 10) unlockAchievement('entries_10');
+            if (totalEntries >= 50) unlockAchievement('entries_50');
+            if (totalEntries >= 100) unlockAchievement('entries_100');
+            if (totalEntries >= 500) unlockAchievement('entries_500');
+            if (totalEntries >= 1000) unlockAchievement('entries_1000');
+
+            // Wins milestones
+            if (wins >= 10) unlockAchievement('wins_10');
+            if (wins >= 50) unlockAchievement('wins_50');
+            if (wins >= 100) unlockAchievement('wins_100');
+
+            // Reflection milestones
+            if (deepDives >= 5) unlockAchievement('deep_dives_5');
+            if (deepDives >= 25) unlockAchievement('deep_dives_25');
+            if (deepDives >= 100) unlockAchievement('deep_dives_100');
+            if (notedEntries >= 10) unlockAchievement('add_notes_10');
+
+            // Explorer - mood variety
+            const usedMoods = new Set(history.filter(h => h.mood).map(h => h.mood));
+            if (usedMoods.size >= state.settings.moods.length && state.settings.moods.length >= 3) {
+                unlockAchievement('try_all_moods');
+            }
+
+            // Explorer - skill variety
+            const usedSkills = new Set(history.filter(h => h.type).map(h => h.type));
+            if (usedSkills.size >= state.settings.skills.length && state.settings.skills.length >= 3) {
+                unlockAchievement('try_all_skills');
+            }
+
+            // Special - all skills in one day
+            const today = new Date().toISOString().split('T')[0];
+            const todaySkills = new Set(
+                history
+                    .filter(h => h.timestamp.startsWith(today) && h.type)
+                    .map(h => h.type)
+            );
+            if (todaySkills.size >= state.settings.skills.length && state.settings.skills.length >= 3) {
+                unlockAchievement('all_skills_one_day');
+            }
+
+            // Calculate streak
+            const streak = calculateStreak();
+            if (streak >= 3) unlockAchievement('streak_3');
+            if (streak >= 7) unlockAchievement('streak_7');
+            if (streak >= 30) unlockAchievement('streak_30');
+
+            // Stats-based achievements
+            if (achievements.stats.hotkeyUsed) unlockAchievement('use_hotkeys');
+            if (achievements.stats.exportUsed) unlockAchievement('export_data');
+            if (achievements.stats.skillsCustomized && achievements.stats.skillsCustomized.length > 0) {
+                unlockAchievement('customize_skill');
+            }
+        }
+
+        function calculateStreak() {
+            if (state.history.length === 0) return 0;
+
+            const dates = [...new Set(state.history.map(h =>
+                new Date(h.timestamp).toISOString().split('T')[0]
+            ))].sort().reverse();
+
+            if (dates.length === 0) return 0;
+
+            const today = new Date().toISOString().split('T')[0];
+            const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+
+            // Must have logged today or yesterday to have active streak
+            if (dates[0] !== today && dates[0] !== yesterday) return 0;
+
+            let streak = 1;
+            let currentDate = new Date(dates[0]);
+
+            for (let i = 1; i < dates.length; i++) {
+                const prevDate = new Date(currentDate);
+                prevDate.setDate(prevDate.getDate() - 1);
+                const prevDateStr = prevDate.toISOString().split('T')[0];
+
+                if (dates[i] === prevDateStr) {
+                    streak++;
+                    currentDate = prevDate;
+                } else {
+                    break;
+                }
+            }
+
+            return streak;
+        }
+
+        function trackAchievementStat(stat, value) {
+            const achievements = loadAchievements();
+            if (stat === 'hotkeyUsed') {
+                achievements.stats.hotkeyUsed = true;
+            } else if (stat === 'exportUsed') {
+                achievements.stats.exportUsed = true;
+            } else if (stat === 'timerUsed') {
+                achievements.stats.timerUsed = true;
+                unlockAchievement('use_timer');
+            } else if (stat === 'skillCustomized') {
+                if (!achievements.stats.skillsCustomized) achievements.stats.skillsCustomized = [];
+                if (!achievements.stats.skillsCustomized.includes(value)) {
+                    achievements.stats.skillsCustomized.push(value);
+                }
+            }
+            saveAchievements(achievements);
+            checkAchievements();
+        }
+
+        // ===========================================
+        // SETTINGS PERSISTENCE
+        // ===========================================
+
+        function loadSettings() {
+            try {
+                const stored = localStorage.getItem('moodity_settings');
+                if (!stored) return { ...DEFAULT_SETTINGS };
+                const parsed = JSON.parse(stored);
+
+                // Deep merge session phases to include new properties like guidingQuestion
+                if (parsed.sessionPhases && DEFAULT_SETTINGS.sessionPhases) {
+                    parsed.sessionPhases = parsed.sessionPhases.map((phase, idx) => {
+                        const defaultPhase = DEFAULT_SETTINGS.sessionPhases[idx] || {};
+                        return {
+                            ...defaultPhase,
+                            ...phase,
+                            // Ensure guiding questions are added if missing
+                            guidingQuestion: phase.guidingQuestion || defaultPhase.guidingQuestion,
+                            // Fix old "Intensity Arousal" label to just "Intensity"
+                            arousalLabel: phase.arousalLabel === 'Intensity Arousal' ? 'Intensity' : (phase.arousalLabel || defaultPhase.arousalLabel)
+                        };
+                    });
+                }
+
+                return { ...DEFAULT_SETTINGS, ...parsed };
+            } catch (e) {
+                console.error('Failed to load settings:', e);
+                return { ...DEFAULT_SETTINGS };
+            }
+        }
+
+        function saveSettings(settings) {
+            try {
+                localStorage.setItem('moodity_settings', JSON.stringify(settings));
+            } catch (e) {
+                console.error('Failed to save settings:', e);
+                showToast('Failed to save settings', 'error');
+            }
+        }
+
+        function loadHistory() {
+            try {
+                const stored = localStorage.getItem('moodity_history');
+                if (!stored) return [];
+                const parsed = JSON.parse(stored);
+                return Array.isArray(parsed) ? parsed : [];
+            } catch (e) {
+                console.error('Failed to load history:', e);
+                return [];
+            }
+        }
+
+        function saveHistory(history) {
+            try {
+                localStorage.setItem('moodity_history', JSON.stringify(history));
+            } catch (e) {
+                console.error('Failed to save history:', e);
+                showToast('Failed to save data', 'error');
+            }
+        }
+
+        // ===========================================
+        // STATE MANAGEMENT
+        // ===========================================
+
+        let state = {
+            view: 'dashboard',
+            settingsTab: 'general',
+            step: 0,
+            history: loadHistory(),
+            settings: loadSettings(),
+            selectedDate: new Date().toISOString().split('T')[0],
+            timerActive: false,
+            timerDropdownOpen: false,
+            timeLeft: loadSettings().defaultTimer,
+            currentSession: {
+                mood: 'neutral',
+                arousal: 3,
+                toggles: {},
+                rating: 0,
+                notes: ''
+            },
+            iconPickerTarget: null,
+            pendingQuickLog: null
+        };
+
+        let timerInterval = null;
+        let activeToast = null;
+        let commentFadeTimeout = null;
+
+        function setState(updates) {
+            state = { ...state, ...updates };
+            if (updates.history) saveHistory(state.history);
+            if (updates.settings) saveSettings(state.settings);
+            render();
+        }
+
+        function updateSettings(updates, skipRender = false) {
+            const newSettings = { ...state.settings, ...updates };
+            state.settings = newSettings;
+            saveSettings(newSettings);
+            if (!skipRender) {
+                render();
+            }
+        }
+
+        function updateSession(updates, skipRender = false) {
+            state.currentSession = { ...state.currentSession, ...updates };
+            if (!skipRender) {
+                render();
+            }
+        }
+
+        // ===========================================
+        // TOAST NOTIFICATIONS
+        // ===========================================
+
+        function showToast(message, type = 'success') {
+            if (activeToast) {
+                activeToast.remove();
+                activeToast = null;
+            }
+
+            const bgColor = type === 'error' ? 'bg-rose-600' : type === 'info' ? 'bg-slate-600' : 'bg-indigo-600';
+            const toast = document.createElement('div');
+            toast.className = `fixed bottom-10 left-1/2 -translate-x-1/2 ${bgColor} text-white px-8 py-3 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-2xl z-50 pointer-events-none toast-enter`;
+            toast.setAttribute('role', 'status');
+            toast.innerText = escapeHtml(message);
+            document.body.appendChild(toast);
+            activeToast = toast;
+
+            setTimeout(() => {
+                toast.classList.remove('toast-enter');
+                toast.classList.add('toast-exit');
+                setTimeout(() => { toast.remove(); activeToast = null; }, 300);
+            }, 2000);
+        }
+
+        // ===========================================
+        // ICON PICKER
+        // ===========================================
+
+        function openIconPicker(targetType, targetId) {
+            state.iconPickerTarget = { type: targetType, id: targetId };
+            const modal = document.getElementById('icon-picker-modal');
+            const grid = document.getElementById('icon-picker-grid');
+
+            // Get current icon
+            let currentIcon = '';
+            if (targetType === 'skill') {
+                const skill = state.settings.skills.find(s => s.id === targetId);
+                currentIcon = skill?.icon || '';
+            } else if (targetType === 'mood') {
+                const mood = state.settings.moods.find(m => m.id === targetId);
+                currentIcon = mood?.icon || '';
+            }
+
+            // Build icon grid
+            grid.innerHTML = AVAILABLE_ICONS.map(icon => `
+                <button data-icon="${icon}" class="${icon === currentIcon ? 'selected' : ''} text-slate-400 hover:text-white" title="${icon}">
+                    <i data-lucide="${icon}" class="w-5 h-5"></i>
+                </button>
+            `).join('');
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+
+            // Attach click handlers
+            grid.querySelectorAll('button').forEach(btn => {
+                btn.addEventListener('click', () => selectIcon(btn.dataset.icon));
+            });
+        }
+
+        function selectIcon(icon) {
+            if (!state.iconPickerTarget) return;
+
+            const { type, id } = state.iconPickerTarget;
+
+            if (type === 'skill') {
+                const skills = state.settings.skills.map(s => s.id === id ? { ...s, icon } : s);
+                updateSettings({ skills });
+            } else if (type === 'mood') {
+                const moods = state.settings.moods.map(m => m.id === id ? { ...m, icon } : m);
+                updateSettings({ moods });
+            }
+
+            closeIconPicker();
+        }
+
+        function closeIconPicker() {
+            const modal = document.getElementById('icon-picker-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            state.iconPickerTarget = null;
+        }
+
+        // ===========================================
+        // QUICK COMMENT POPUP
+        // ===========================================
+
+        function showQuickCommentPopup(skillName, status) {
+            state.pendingQuickLog = { skillName, status };
+
+            const popup = document.getElementById('quick-comment-popup');
+            const input = document.getElementById('quick-comment-input');
+
+            input.value = '';
+            popup.classList.remove('hidden');
+            popup.classList.add('block');
+
+            // Start auto-close timeout (5 seconds)
+            clearTimeout(commentFadeTimeout);
+            commentFadeTimeout = setTimeout(() => {
+                if (!input.value.trim()) {
+                    closeCommentPopup();
+                    completeQuickLog('');
+                }
+            }, 5000);
+
+            // Handle keydown for Enter and Escape
+            input.addEventListener('keydown', handleCommentKeydown);
+            input.addEventListener('input', handleCommentInput);
+            input.focus();
+        }
+
+        function handleCommentKeydown(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                saveQuickComment();
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                skipQuickComment();
+            }
+        }
+
+        function handleCommentInput(e) {
+            // Clear the auto-close timeout since user is typing
+            clearTimeout(commentFadeTimeout);
+        }
+
+        function closeCommentPopup() {
+            const popup = document.getElementById('quick-comment-popup');
+            const input = document.getElementById('quick-comment-input');
+
+            popup.classList.add('hidden');
+            popup.classList.remove('block');
+            input.removeEventListener('keydown', handleCommentKeydown);
+            input.removeEventListener('input', handleCommentInput);
+            clearTimeout(commentFadeTimeout);
+        }
+
+        function saveQuickComment() {
+            const input = document.getElementById('quick-comment-input');
+            const comment = input.value.trim();
+            closeCommentPopup();
+            completeQuickLog(comment);
+        }
+
+        function skipQuickComment() {
+            closeCommentPopup();
+            completeQuickLog('');
+        }
+
+        function completeQuickLog(additionalNote) {
+            if (!state.pendingQuickLog) return;
+
+            const { skillName, status } = state.pendingQuickLog;
+            const label = status === 'pos' ? `WIN: ${skillName}` : `STRUGGLE: ${skillName}`;
+
+            // Sanitize the additional note
+            const sanitizedNote = additionalNote ? escapeHtml(additionalNote.substring(0, 500)) : '';
+            const fullNote = sanitizedNote ? `${label} - ${sanitizedNote}` : label;
+
+            const entry = {
+                id: generateId(),
+                timestamp: new Date().toISOString(),
+                quickEntry: true,
+                type: skillName,
+                status: status,
+                notes: fullNote,
+                mood: state.currentSession.mood,
+                arousal: state.currentSession.arousal
+            };
+
+            setState({ history: [entry, ...state.history] });
+            showToast(label);
+            state.pendingQuickLog = null;
+            checkAchievements();
+        }
+
+        function quickLog(skillName, status, buttonElement) {
+            playClick('soft');
+            // Animate the icon with key-turn effect
+            if (buttonElement) {
+                // Lucide replaces <i> with <svg>, so look for SVG first
+                const icon = buttonElement.querySelector('svg') || buttonElement.querySelector('i[data-lucide]');
+                if (icon) {
+                    const animClass = status === 'neg' ? 'key-turn-cw' : 'key-turn-ccw';
+                    icon.classList.remove('key-turn-cw', 'key-turn-ccw');
+                    void icon.offsetWidth; // Force reflow
+                    icon.classList.add(animClass);
+                    setTimeout(() => icon.classList.remove(animClass), 300);
+                }
+            }
+            showQuickCommentPopup(skillName, status);
+        }
+
+        // ===========================================
+        // ACTIONS
+        // ===========================================
+
+        function undoLastAction() {
+            if (state.history.length > 0) {
+                const updated = [...state.history];
+                updated.shift();
+                setState({ history: updated });
+                showToast('Entry removed', 'info');
+            }
+        }
+
+        function saveEntry() {
+            playClick('success');
+            const now = new Date();
+            const { year, month, day } = parseDateSafe(state.selectedDate);
+            const timestamp = new Date(year, month - 1, day, now.getHours(), now.getMinutes()).toISOString();
+
+            const entry = {
+                id: generateId(),
+                timestamp: timestamp,
+                quickEntry: false,
+                ...state.currentSession
+            };
+
+            setState({
+                history: [entry, ...state.history],
+                view: 'dashboard',
+                step: 0,
+                currentSession: { mood: 'neutral', arousal: 3, toggles: {}, rating: 0, notes: '' }
+            });
+            showToast('Session saved');
+            checkAchievements();
+        }
+
+        // ===========================================
+        // TIMER
+        // ===========================================
+
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            setState({ timerActive: true });
+            trackAchievementStat('timerUsed');
+            timerInterval = setInterval(() => {
+                if (state.timerActive && state.timeLeft > 0) {
+                    state.timeLeft -= 1;
+                    const el = document.getElementById('timer-display');
+                    if (el) el.textContent = formatTime(state.timeLeft);
+                    if (state.timeLeft === 0) {
+                        stopTimer();
+                        showToast('Timer complete!', 'info');
+                    }
+                }
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+            setState({ timerActive: false });
+        }
+
+        function toggleTimer() {
+            playClick('toggle');
+            state.timerActive ? stopTimer() : startTimer();
+        }
+
+        function resetTimer(seconds) {
+            stopTimer();
+            setState({ timeLeft: seconds });
+        }
+
+        // ===========================================
+        // TIMER PRESETS MANAGEMENT
+        // ===========================================
+
+        function addTimerPreset() {
+            const presets = [...state.settings.timerPresets, { id: generateId(), label: '2m', seconds: 120 }];
+            updateSettings({ timerPresets: presets });
+        }
+
+        function updateTimerPreset(id, updates, skipRender = false) {
+            const presets = state.settings.timerPresets.map(p => p.id === id ? { ...p, ...updates } : p);
+            updateSettings({ timerPresets: presets }, skipRender);
+        }
+
+        function deleteTimerPreset(id) {
+            if (state.settings.timerPresets.length <= 1) {
+                showToast('Need at least one preset', 'error');
+                return;
+            }
+            const presets = state.settings.timerPresets.filter(p => p.id !== id);
+            updateSettings({ timerPresets: presets });
+        }
+
+        // ===========================================
+        // EXPORT
+        // ===========================================
+
+        function downloadJSON() {
+            try {
+                const data = { settings: state.settings, history: state.history };
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
+                const a = document.createElement('a');
+                a.href = dataStr;
+                a.download = `moodity_backup_${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+                showToast('Backup exported');
+                trackAchievementStat('exportUsed');
+            } catch (e) {
+                showToast('Export failed', 'error');
+            }
+        }
+
+        function downloadCSV() {
+            try {
+                const headers = ['Date', 'Time', 'Type', 'Mood', 'Intensity', 'Status', 'Notes'];
+                const rows = state.history.map(h => {
+                    const date = new Date(h.timestamp);
+                    return [
+                        date.toLocaleDateString(),
+                        date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                        h.type || (h.quickEntry ? 'Quick' : 'Session'),
+                        h.mood || '',
+                        h.arousal || '',
+                        h.status === 'pos' ? 'Win' : h.status === 'neg' ? 'Struggle' : '',
+                        `"${(h.notes || '').replace(/"/g, '""')}"`
+                    ].join(',');
+                });
+                const csv = [headers.join(','), ...rows].join('\n');
+                const a = document.createElement('a');
+                a.href = "data:text/csv;charset=utf-8," + encodeURIComponent(csv);
+                a.download = `moodity_history_${new Date().toISOString().split('T')[0]}.csv`;
+                a.click();
+                showToast('CSV exported');
+            } catch (e) {
+                showToast('Export failed', 'error');
+            }
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.settings) {
+                        setState({ settings: { ...DEFAULT_SETTINGS, ...data.settings } });
+                    }
+                    if (data.history && Array.isArray(data.history)) {
+                        setState({ history: data.history });
+                    }
+                    showToast('Data imported');
+                } catch (err) {
+                    showToast('Invalid file', 'error');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        // ===========================================
+        // SETTINGS MANAGEMENT
+        // ===========================================
+
+        function addSkill() {
+            const skills = [...state.settings.skills, { id: generateId(), name: 'New Skill', icon: 'star' }];
+            updateSettings({ skills });
+        }
+
+        function updateSkill(id, updates, skipRender = false) {
+            const skills = state.settings.skills.map(s => s.id === id ? { ...s, ...updates } : s);
+            updateSettings({ skills }, skipRender);
+            trackAchievementStat('skillCustomized', id);
+        }
+
+        function deleteSkill(id) {
+            if (state.settings.skills.length <= 1) {
+                showToast('Need at least one skill', 'error');
+                return;
+            }
+            const skills = state.settings.skills.filter(s => s.id !== id);
+            updateSettings({ skills });
+        }
+
+        function addMood() {
+            const moods = [...state.settings.moods, { id: generateId(), name: 'new-mood', icon: 'circle', label: 'New Mood' }];
+            updateSettings({ moods });
+        }
+
+        function updateMood(id, updates, skipRender = false) {
+            const moods = state.settings.moods.map(m => m.id === id ? { ...m, ...updates } : m);
+            updateSettings({ moods }, skipRender);
+        }
+
+        function deleteMood(id) {
+            if (state.settings.moods.length <= 1) {
+                showToast('Need at least one mood', 'error');
+                return;
+            }
+            const moods = state.settings.moods.filter(m => m.id !== id);
+            updateSettings({ moods });
+        }
+
+        function addPhase() {
+            const phases = [...state.settings.sessionPhases, {
+                id: generateId(),
+                title: 'New Phase',
+                type: 'toggles',
+                toggles: [{ id: generateId(), label: 'New Question', key: 'newQuestion' }]
+            }];
+            updateSettings({ sessionPhases: phases });
+        }
+
+        function updatePhase(id, updates, skipRender = false) {
+            const phases = state.settings.sessionPhases.map(p => p.id === id ? { ...p, ...updates } : p);
+            updateSettings({ sessionPhases: phases }, skipRender);
+        }
+
+        function deletePhase(id) {
+            if (state.settings.sessionPhases.length <= 1) {
+                showToast('Need at least one phase', 'error');
+                return;
+            }
+            const phases = state.settings.sessionPhases.filter(p => p.id !== id);
+            updateSettings({ sessionPhases: phases });
+        }
+
+        function movePhase(id, direction) {
+            const phases = [...state.settings.sessionPhases];
+            const idx = phases.findIndex(p => p.id === id);
+            if ((direction === -1 && idx === 0) || (direction === 1 && idx === phases.length - 1)) return;
+            [phases[idx], phases[idx + direction]] = [phases[idx + direction], phases[idx]];
+            updateSettings({ sessionPhases: phases });
+        }
+
+        function addToggleToPhase(phaseId) {
+            const phases = state.settings.sessionPhases.map(p => {
+                if (p.id === phaseId && p.type === 'toggles') {
+                    return { ...p, toggles: [...(p.toggles || []), { id: generateId(), label: 'New Question', key: 'newKey' + Date.now() }] };
+                }
+                return p;
+            });
+            updateSettings({ sessionPhases: phases });
+        }
+
+        function updateToggleInPhase(phaseId, toggleId, updates, skipRender = false) {
+            const phases = state.settings.sessionPhases.map(p => {
+                if (p.id === phaseId && p.toggles) {
+                    return { ...p, toggles: p.toggles.map(t => t.id === toggleId ? { ...t, ...updates } : t) };
+                }
+                return p;
+            });
+            updateSettings({ sessionPhases: phases }, skipRender);
+        }
+
+        function deleteToggleFromPhase(phaseId, toggleId) {
+            const phases = state.settings.sessionPhases.map(p => {
+                if (p.id === phaseId && p.toggles) {
+                    if (p.toggles.length <= 1) {
+                        showToast('Need at least one question', 'error');
+                        return p;
+                    }
+                    return { ...p, toggles: p.toggles.filter(t => t.id !== toggleId) };
+                }
+                return p;
+            });
+            updateSettings({ sessionPhases: phases });
+        }
+
+        function resetToDefaults() {
+            if (confirm('Reset all settings to defaults? Your history will be preserved.')) {
+                setState({ settings: { ...DEFAULT_SETTINGS } });
+                showToast('Settings reset');
+            }
+        }
+
+        function clearAllData() {
+            if (confirm('Delete ALL data including history and settings? This cannot be undone.')) {
+                localStorage.removeItem('moodity_history');
+                localStorage.removeItem('moodity_settings');
+                setState({ history: [], settings: { ...DEFAULT_SETTINGS } });
+                showToast('All data cleared', 'info');
+            }
+        }
+
+        // ===========================================
+        // RENDER FUNCTIONS
+        // ===========================================
+
+        function render() {
+            const root = document.getElementById('app');
+            const sizeClass = `size-${state.settings.uiSize || 'medium'}`;
+            const lightModeClass = state.settings.lightMode ? 'light-mode' : '';
+            document.body.className = `bg-slate-950 text-slate-200 min-h-screen ${sizeClass} ${lightModeClass}`;
+
+            root.innerHTML = `
+                <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                            <i data-lucide="activity" class="text-white w-6 h-6"></i>
+                        </div>
+                        <h1 class="text-3xl md:text-4xl font-black tracking-tighter uppercase italic text-white">${escapeHtml(state.settings.appTitle || 'MOODITY')}</h1>
+                    </div>
+
+                    <nav class="flex items-center gap-2 bg-slate-900/50 p-2 rounded-2xl border border-slate-800 flex-wrap pt-6">
+                        ${state.history.length > 0 ? `
+                        <button id="undo-btn" class="p-3 text-slate-400 hover:text-indigo-400 transition-colors relative" title="Undo (Ctrl+Z)">
+                            ${state.settings.showHotkeyHints ? '<span class="toolbar-hint">⌘Z</span>' : ''}
+                            <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
+                        </button>
+                        <div class="w-px h-6 bg-slate-800"></div>
+                        ` : ''}
+
+                        <div class="relative">
+                            <button id="timer-btn" class="flex items-center gap-2 px-3 py-2 rounded-xl transition-all relative ${state.timerActive ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}">
+                                ${state.settings.showHotkeyHints ? '<span class="toolbar-hint">T</span>' : ''}
+                                <i data-lucide="timer" class="w-4 h-4"></i>
+                                <span id="timer-display" class="font-mono text-sm font-bold">${formatTime(state.timeLeft)}</span>
+                                <i data-lucide="${state.timerDropdownOpen ? 'chevron-up' : 'chevron-down'}" class="w-3 h-3 opacity-50"></i>
+                            </button>
+                            ${state.timerDropdownOpen ? `
+                            <div id="timer-dropdown" class="absolute top-full left-0 mt-2 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-2 min-w-[140px] z-50">
+                                <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest px-2 py-1 mb-1">Set Timer</p>
+                                ${state.settings.timerPresets.map(preset => `
+                                    <button data-timer-preset="${preset.seconds}" class="w-full text-left px-3 py-2 text-sm font-bold rounded-lg transition-all hover:bg-slate-800 ${state.timeLeft === preset.seconds && !state.timerActive ? 'text-indigo-400' : 'text-slate-300'}">
+                                        ${escapeHtml(preset.label)}
+                                    </button>
+                                `).join('')}
+                                <div class="border-t border-slate-800 my-2"></div>
+                                <button id="reset-timer-btn" class="w-full text-left px-3 py-2 text-sm font-bold rounded-lg transition-all hover:bg-slate-800 text-slate-400">
+                                    <i data-lucide="rotate-ccw" class="w-3 h-3 inline mr-2"></i>Reset
+                                </button>
+                                ${state.timerActive ? `
+                                <button id="stop-timer-btn" class="w-full text-left px-3 py-2 text-sm font-bold rounded-lg transition-all hover:bg-rose-500/20 text-rose-400">
+                                    <i data-lucide="square" class="w-3 h-3 inline mr-2"></i>Stop
+                                </button>
+                                ` : `
+                                <button id="start-timer-btn" class="w-full text-left px-3 py-2 text-sm font-bold rounded-lg transition-all hover:bg-indigo-500/20 text-indigo-400">
+                                    <i data-lucide="play" class="w-3 h-3 inline mr-2"></i>Start
+                                </button>
+                                `}
+                            </div>
+                            ` : ''}
+                        </div>
+
+                        <button id="archive-btn" class="flex items-center gap-2 px-3 py-2 relative ${state.view === 'history' ? 'bg-indigo-600 text-white' : 'bg-indigo-500/10 text-indigo-400'} rounded-xl border border-indigo-500/20 hover:bg-indigo-500/20 transition-all">
+                            ${state.settings.showHotkeyHints ? '<span class="toolbar-hint">A</span>' : ''}
+                            <i data-lucide="archive" class="w-4 h-4"></i>
+                            <span class="text-[10px] font-black uppercase">${state.history.length}</span>
+                        </button>
+
+                        <button id="settings-btn" class="p-3 relative ${state.view === 'settings' ? 'text-indigo-400' : 'text-slate-400'} hover:text-indigo-400 transition-colors" title="Settings">
+                            ${state.settings.showHotkeyHints ? '<span class="toolbar-hint">S</span>' : ''}
+                            <i data-lucide="settings" class="w-5 h-5"></i>
+                        </button>
+                    </nav>
+                </header>
+
+                <main id="main-content" tabindex="-1">
+                    ${state.view === 'dashboard' ? renderDashboard() : ''}
+                    ${state.view === 'entry' ? renderEntry() : ''}
+                    ${state.view === 'history' ? renderHistory() : ''}
+                    ${state.view === 'settings' ? renderSettings() : ''}
+                </main>
+            `;
+
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            attachEventListeners();
+        }
+
+        function attachEventListeners() {
+            document.getElementById('undo-btn')?.addEventListener('click', undoLastAction);
+            document.getElementById('timer-btn')?.addEventListener('click', () => {
+                setState({ timerDropdownOpen: !state.timerDropdownOpen });
+            });
+            document.getElementById('reset-timer-btn')?.addEventListener('click', () => {
+                resetTimer(state.settings.defaultTimer);
+                setState({ timerDropdownOpen: false });
+            });
+            document.getElementById('start-timer-btn')?.addEventListener('click', () => {
+                startTimer();
+                setState({ timerDropdownOpen: false });
+            });
+            document.getElementById('stop-timer-btn')?.addEventListener('click', () => {
+                stopTimer();
+                setState({ timerDropdownOpen: false });
+            });
+            document.getElementById('archive-btn')?.addEventListener('click', () => setState({ view: state.view === 'history' ? 'dashboard' : 'history', timerDropdownOpen: false }));
+            document.getElementById('settings-btn')?.addEventListener('click', () => setState({ view: state.view === 'settings' ? 'dashboard' : 'settings', timerDropdownOpen: false }));
+
+            // Dashboard
+            document.getElementById('session-date')?.addEventListener('change', (e) => {
+                if (isValidDate(e.target.value)) setState({ selectedDate: e.target.value });
+            });
+            document.getElementById('new-session-btn')?.addEventListener('click', () => setState({ view: 'entry', step: 0 }));
+
+            document.querySelectorAll('[data-quicklog]').forEach(btn => {
+                btn.addEventListener('click', () => quickLog(btn.dataset.skill, btn.dataset.status, btn));
+            });
+
+            // Entry
+            document.getElementById('close-entry-btn')?.addEventListener('click', () => setState({ view: 'dashboard' }));
+            document.getElementById('back-btn')?.addEventListener('click', () => setState({ step: state.step - 1 }));
+            document.getElementById('next-btn')?.addEventListener('click', () => {
+                if (state.step === state.settings.sessionPhases.length - 1) saveEntry();
+                else setState({ step: state.step + 1 });
+            });
+
+            document.querySelectorAll('[data-mood]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    playClick('soft');
+                    updateSession({ mood: btn.dataset.mood });
+                });
+            });
+
+            document.getElementById('arousal-slider')?.addEventListener('input', (e) => {
+                updateSession({ arousal: parseInt(e.target.value) });
+            });
+
+            document.querySelectorAll('[data-toggle-key]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    playClick('toggle');
+                    const key = btn.dataset.toggleKey;
+                    const newToggles = { ...state.currentSession.toggles, [key]: !state.currentSession.toggles[key] };
+                    updateSession({ toggles: newToggles });
+                });
+            });
+
+            document.querySelectorAll('[data-rating]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    playClick('soft');
+                    updateSession({ rating: parseInt(btn.dataset.rating) });
+                });
+            });
+
+            document.getElementById('notes-textarea')?.addEventListener('input', (e) => {
+                updateSession({ notes: e.target.value }, true); // Skip render to keep focus
+            });
+
+            // History
+            document.getElementById('export-json-btn')?.addEventListener('click', downloadJSON);
+            document.getElementById('export-csv-btn')?.addEventListener('click', downloadCSV);
+            document.getElementById('close-history-btn')?.addEventListener('click', () => setState({ view: 'dashboard' }));
+            document.getElementById('clear-history-btn')?.addEventListener('click', () => {
+                if (confirm('Clear all history?')) { setState({ history: [] }); showToast('History cleared', 'info'); }
+            });
+
+            // Settings tabs
+            document.querySelectorAll('[data-settings-tab]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    playClick('soft');
+                    setState({ settingsTab: btn.dataset.settingsTab });
+                });
+            });
+
+            // Settings actions
+            document.getElementById('add-skill-btn')?.addEventListener('click', addSkill);
+            document.getElementById('add-mood-btn')?.addEventListener('click', addMood);
+            document.getElementById('add-phase-btn')?.addEventListener('click', addPhase);
+            document.getElementById('add-timer-preset-btn')?.addEventListener('click', addTimerPreset);
+            document.getElementById('reset-defaults-btn')?.addEventListener('click', resetToDefaults);
+            document.getElementById('clear-all-btn')?.addEventListener('click', clearAllData);
+            document.getElementById('import-input')?.addEventListener('change', importData);
+            document.getElementById('toggle-hotkey-hints')?.addEventListener('click', () => {
+                updateSettings({ showHotkeyHints: !state.settings.showHotkeyHints });
+            });
+            document.getElementById('toggle-hotkeys-enabled')?.addEventListener('click', () => {
+                const newEnabled = state.settings.hotkeysEnabled === false ? true : false;
+                // Auto-disable hints when hotkeys are disabled
+                const updates = { hotkeysEnabled: newEnabled };
+                if (!newEnabled) {
+                    updates.showHotkeyHints = false;
+                }
+                updateSettings(updates);
+            });
+
+            document.getElementById('app-title-input')?.addEventListener('input', (e) => {
+                updateSettings({ appTitle: e.target.value }, true);
+            });
+
+            document.querySelectorAll('[data-size]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    playClick('soft');
+                    updateSettings({ uiSize: btn.dataset.size });
+                });
+            });
+            document.getElementById('toggle-light-mode')?.addEventListener('click', () => {
+                playClick('toggle');
+                updateSettings({ lightMode: !state.settings.lightMode });
+            });
+
+            // Icon picker buttons
+            document.querySelectorAll('[data-open-icon-picker]').forEach(btn => {
+                btn.addEventListener('click', () => openIconPicker(btn.dataset.iconType, btn.dataset.iconTargetId));
+            });
+
+            // Skill editing
+            document.querySelectorAll('[data-delete-skill]').forEach(btn => {
+                btn.addEventListener('click', () => deleteSkill(btn.dataset.deleteSkill));
+            });
+            document.querySelectorAll('[data-skill-name]').forEach(input => {
+                input.addEventListener('input', (e) => updateSkill(input.dataset.skillId, { name: e.target.value }, true));
+            });
+
+            // Mood editing
+            document.querySelectorAll('[data-delete-mood]').forEach(btn => {
+                btn.addEventListener('click', () => deleteMood(btn.dataset.deleteMood));
+            });
+            document.querySelectorAll('[data-mood-label]').forEach(input => {
+                input.addEventListener('input', (e) => updateMood(input.dataset.moodId, { label: e.target.value, name: e.target.value.toLowerCase().replace(/\s+/g, '-') }, true));
+            });
+
+            // Timer preset editing
+            document.querySelectorAll('[data-delete-timer-preset]').forEach(btn => {
+                btn.addEventListener('click', () => deleteTimerPreset(btn.dataset.deleteTimerPreset));
+            });
+            document.querySelectorAll('[data-timer-label]').forEach(input => {
+                input.addEventListener('input', (e) => updateTimerPreset(input.dataset.timerId, { label: e.target.value }, true));
+            });
+            document.querySelectorAll('[data-timer-seconds]').forEach(input => {
+                input.addEventListener('input', (e) => {
+                    const seconds = parseInt(e.target.value) || 60;
+                    updateTimerPreset(input.dataset.timerId, { seconds: Math.max(10, Math.min(3600, seconds)) }, true);
+                });
+            });
+
+            // Phase editing
+            document.querySelectorAll('[data-delete-phase]').forEach(btn => {
+                btn.addEventListener('click', () => deletePhase(btn.dataset.deletePhase));
+            });
+            document.querySelectorAll('[data-move-phase-up]').forEach(btn => {
+                btn.addEventListener('click', () => movePhase(btn.dataset.movePhaseUp, -1));
+            });
+            document.querySelectorAll('[data-move-phase-down]').forEach(btn => {
+                btn.addEventListener('click', () => movePhase(btn.dataset.movePhaseDown, 1));
+            });
+            document.querySelectorAll('[data-phase-title]').forEach(input => {
+                input.addEventListener('input', (e) => updatePhase(input.dataset.phaseId, { title: e.target.value }, true));
+            });
+            document.querySelectorAll('[data-add-toggle]').forEach(btn => {
+                btn.addEventListener('click', () => addToggleToPhase(btn.dataset.addToggle));
+            });
+
+            // Toggle editing
+            document.querySelectorAll('[data-toggle-label]').forEach(input => {
+                input.addEventListener('input', (e) => {
+                    updateToggleInPhase(input.dataset.phaseId, input.dataset.toggleId, { label: e.target.value }, true);
+                });
+            });
+            document.querySelectorAll('[data-delete-toggle]').forEach(btn => {
+                btn.addEventListener('click', () => deleteToggleFromPhase(btn.dataset.phaseId, btn.dataset.deleteToggle));
+            });
+
+            // Timer presets (in dropdown and elsewhere)
+            document.querySelectorAll('[data-timer-preset]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    playClick('soft');
+                    resetTimer(parseInt(btn.dataset.timerPreset));
+                    setState({ timerDropdownOpen: false });
+                });
+            });
+
+            // Close timer dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (state.timerDropdownOpen && !e.target.closest('#timer-btn') && !e.target.closest('#timer-dropdown')) {
+                    setState({ timerDropdownOpen: false });
+                }
+            });
+        }
+
+        // ===========================================
+        // VIEW RENDERERS
+        // ===========================================
+
+        function renderDashboard() {
+            return `
+                <div class="space-y-10">
+                    <div class="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
+                        <div class="flex flex-col items-center gap-2">
+                            <label for="session-date" class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Date</label>
+                            <input type="date" id="session-date" value="${state.selectedDate}"
+                                class="bg-slate-900 border-2 border-slate-800 rounded-2xl px-5 py-3 text-white font-bold focus:border-indigo-500 outline-none shadow-xl text-sm">
+                        </div>
+                        <div class="h-10 w-px bg-slate-800 hidden sm:block"></div>
+                        <div class="flex flex-col items-center gap-2">
+                            <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Action</label>
+                            <button id="new-session-btn" class="flex items-center gap-3 bg-white text-slate-950 px-6 py-3 rounded-2xl font-black uppercase tracking-widest text-sm hover:scale-105 active:scale-95 transition-all shadow-xl relative">
+                                ${state.settings.showHotkeyHints ? '<span class="hotkey-hint">D</span>' : ''}
+                                <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                                Deep Dive
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Skills Grid -->
+                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-${Math.min(state.settings.skills.length, 5)} gap-6 justify-items-center">
+                        ${state.settings.skills.map((skill, index) => renderSkillCard(skill, index)).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderSkillCard(skill, index) {
+            const showHints = state.settings.showHotkeyHints;
+            const keyNum = index + 1;
+            return `
+                <div class="flex flex-col gap-3 w-full max-w-[200px]">
+                    <div class="flex items-center justify-center gap-2 px-3">
+                        <i data-lucide="${escapeHtml(skill.icon)}" class="w-4 h-4 text-slate-600"></i>
+                        <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">${escapeHtml(skill.name)}</span>
+                    </div>
+                    <div class="aspect-square glass-card rounded-3xl flex flex-row border-2 border-slate-800/50 shadow-xl relative overflow-visible">
+                        <button data-quicklog data-skill="${escapeHtml(skill.name)}" data-status="neg"
+                            class="flex-1 flex flex-col items-center justify-center group hover:bg-slate-800/50 transition-all relative overflow-visible rounded-l-3xl"
+                            aria-label="Log struggle for ${escapeHtml(skill.name)}">
+                            ${showHints && keyNum <= 9 ? `<span class="hotkey-hint" style="top: 8px; left: 8px; right: auto;">⇧${keyNum}</span>` : ''}
+                            <i data-lucide="minus" class="w-8 h-8 text-slate-500 group-hover:text-rose-400 group-hover:scale-110 transition-all"></i>
+                            <span class="text-[8px] font-black uppercase mt-2 opacity-0 group-hover:opacity-100 text-slate-500">Struggle</span>
+                        </button>
+                        <div class="thick-divider h-auto"></div>
+                        <button data-quicklog data-skill="${escapeHtml(skill.name)}" data-status="pos"
+                            class="flex-1 flex flex-col items-center justify-center group hover:bg-indigo-500/10 transition-all relative overflow-visible rounded-r-3xl"
+                            aria-label="Log win for ${escapeHtml(skill.name)}">
+                            ${showHints && keyNum <= 9 ? `<span class="hotkey-hint" style="top: 8px; right: 8px;">${keyNum}</span>` : ''}
+                            <i data-lucide="plus" class="w-8 h-8 text-indigo-500 group-hover:scale-110 transition-all"></i>
+                            <span class="text-[8px] font-black uppercase mt-2 opacity-0 group-hover:opacity-100 text-indigo-400">Win</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderEntry() {
+            const phases = state.settings.sessionPhases;
+            const phase = phases[state.step];
+            if (!phase) return '<div>No phases configured</div>';
+
+            return `
+                <div class="max-w-3xl mx-auto glass-card rounded-3xl p-6 lg:p-12 border border-slate-800 shadow-2xl">
+                    <div class="flex justify-between items-start mb-10">
+                        <div>
+                            <p class="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-1">Step ${state.step + 1} of ${phases.length}</p>
+                            <h2 class="text-2xl md:text-3xl font-black italic uppercase text-white tracking-tight">${escapeHtml(phase.title)}</h2>
+                        </div>
+                        <button id="close-entry-btn" class="p-3 hover:bg-slate-800 rounded-full text-slate-500">
+                            <i data-lucide="x" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+
+                    <div class="min-h-[250px]">
+                        ${renderPhaseContent(phase)}
+                    </div>
+
+                    <div class="mt-12 flex gap-3">
+                        ${state.step > 0 ? `<button id="back-btn" class="flex-1 py-4 bg-slate-900 border border-slate-800 text-slate-400 rounded-2xl font-black uppercase text-[10px] hover:text-white transition-all">Back</button>` : ''}
+                        <button id="next-btn" class="flex-[2] py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase text-[10px] shadow-xl hover:scale-[1.02] active:scale-95 transition-all">
+                            ${state.step === phases.length - 1 ? 'Save Entry' : 'Next'}
+                        </button>
+                    </div>
+
+                    <div class="flex justify-center gap-2 mt-6">
+                        ${phases.map((_, i) => `<div class="w-2 h-2 rounded-full ${i <= state.step ? 'bg-indigo-500' : 'bg-slate-700'}"></div>`).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderPhaseContent(phase) {
+            const showHints = state.settings.showHotkeyHints;
+            const guidingHtml = phase.guidingQuestion ? `
+                <div class="mb-6 p-4 bg-indigo-500/5 border border-indigo-500/20 rounded-xl">
+                    <p class="text-sm text-slate-400 italic"><i data-lucide="help-circle" class="w-4 h-4 inline mr-2 text-indigo-400"></i>${escapeHtml(phase.guidingQuestion)}</p>
+                </div>
+            ` : '';
+
+            if (phase.type === 'mood-arousal') {
+                return `
+                    ${guidingHtml}
+                    <div class="space-y-8">
+                        <div class="grid grid-cols-${state.settings.moods.length} gap-4">
+                            ${state.settings.moods.map((m, idx) => `
+                                <button data-mood="${escapeHtml(m.name)}"
+                                    class="h-24 rounded-2xl border-2 transition-all flex flex-col items-center justify-center gap-2 relative ${state.currentSession.mood === m.name ? 'border-indigo-500 bg-indigo-500/10' : 'border-slate-800 bg-slate-900/50 opacity-50 hover:opacity-100'}">
+                                    ${showHints ? `<span class="hotkey-hint">${idx + 1}</span>` : ''}
+                                    <i data-lucide="${escapeHtml(m.icon)}" class="w-6 h-6 ${state.currentSession.mood === m.name ? 'text-indigo-400' : 'text-slate-500'}"></i>
+                                    <span class="text-[9px] font-black uppercase">${escapeHtml(m.label)}</span>
+                                </button>
+                            `).join('')}
+                        </div>
+                        <div class="p-6 bg-slate-900/50 rounded-2xl border border-slate-800">
+                            <div class="flex justify-between items-center mb-4">
+                                <label for="arousal-slider" class="text-[10px] font-black text-slate-500 uppercase tracking-widest">${escapeHtml(phase.arousalLabel || 'Intensity')}</label>
+                                <span class="text-3xl font-black text-indigo-400 font-mono">${state.currentSession.arousal}</span>
+                            </div>
+                            <input type="range" id="arousal-slider" min="${phase.arousalMin || 1}" max="${phase.arousalMax || 5}" value="${state.currentSession.arousal}" step="1" class="custom-range">
+                            <div class="flex justify-between text-[9px] text-slate-600 mt-2">
+                                <span>Low</span><span>High</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (phase.type === 'toggles') {
+                return `
+                    ${guidingHtml}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        ${(phase.toggles || []).map((t, idx) => {
+                            const active = state.currentSession.toggles[t.key];
+                            return `
+                                <button data-toggle-key="${escapeHtml(t.key)}"
+                                    class="flex justify-between items-center p-6 rounded-2xl border-2 transition-all relative ${active ? 'bg-indigo-500/10 border-indigo-500 text-white' : 'bg-slate-900/50 border-slate-800 text-slate-500'}">
+                                    ${showHints ? `<span class="hotkey-hint">${idx + 1}</span>` : ''}
+                                    <span class="font-bold text-xs uppercase tracking-wide text-left">${escapeHtml(t.label)}</span>
+                                    <div class="w-6 h-6 rounded-full border-2 border-current flex items-center justify-center">
+                                        ${active ? '<i data-lucide="check" class="w-3 h-3"></i>' : ''}
+                                    </div>
+                                </button>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+            }
+
+            if (phase.type === 'notes-rating') {
+                return `
+                    ${guidingHtml}
+                    <div class="space-y-6">
+                        <div>
+                            <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">${escapeHtml(phase.ratingLabel || 'Rating')} (${phase.ratingMin || 0}-${phase.ratingMax || 3})</p>
+                            <div class="grid grid-cols-${(phase.ratingMax || 3) - (phase.ratingMin || 0) + 1} gap-3">
+                                ${Array.from({ length: (phase.ratingMax || 3) - (phase.ratingMin || 0) + 1 }, (_, i) => i + (phase.ratingMin || 0)).map(v => `
+                                    <button data-rating="${v}"
+                                        class="h-14 rounded-xl font-black text-lg border-2 transition-all relative ${state.currentSession.rating === v ? 'bg-indigo-600 text-white border-indigo-400' : 'bg-slate-900 border-slate-800 text-slate-600'}">
+                                        ${showHints ? `<span class="hotkey-hint">${v}</span>` : ''}
+                                        ${v}
+                                    </button>
+                                `).join('')}
+                            </div>
+                        </div>
+                        <textarea id="notes-textarea" placeholder="${escapeHtml(phase.notesPlaceholder || 'Notes...')}"
+                            class="w-full p-6 bg-slate-900 text-white rounded-2xl border border-slate-800 h-36 focus:border-indigo-500/50 outline-none placeholder:text-slate-700">${escapeHtml(state.currentSession.notes)}</textarea>
+                    </div>
+                `;
+            }
+
+            return '<div class="text-slate-500">Unknown phase type</div>';
+        }
+
+        function renderHistory() {
+            return `
+                <div>
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-10">
+                        <h2 class="text-3xl font-black italic uppercase text-white tracking-tight">Archive</h2>
+                        <div class="flex gap-2 flex-wrap">
+                            <button id="export-json-btn" class="bg-white text-slate-950 px-4 py-2 rounded-xl font-black text-[10px] uppercase flex items-center gap-2 hover:scale-105 transition-all">
+                                <i data-lucide="download" class="w-4 h-4"></i> JSON
+                            </button>
+                            <button id="export-csv-btn" class="bg-emerald-600 text-white px-4 py-2 rounded-xl font-black text-[10px] uppercase flex items-center gap-2 hover:scale-105 transition-all">
+                                <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> CSV
+                            </button>
+                            <button id="close-history-btn" class="bg-slate-800 text-slate-400 px-4 py-2 rounded-xl font-black text-[10px] uppercase hover:text-white transition-all">
+                                Close
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        ${state.history.length === 0 ?
+                            '<div class="col-span-full py-32 text-center text-slate-700 font-black uppercase tracking-widest">No Data Yet</div>' :
+                            state.history.map(h => `
+                                <div class="glass-card p-6 rounded-2xl border border-slate-800 hover:border-indigo-500/30 transition-all">
+                                    <div class="flex justify-between items-start mb-4">
+                                        <div>
+                                            <div class="text-[10px] font-black text-indigo-500 uppercase tracking-widest">${new Date(h.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' })}</div>
+                                            <div class="text-lg font-black text-white">${new Date(h.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                                        </div>
+                                        ${h.mood ? `<div class="w-10 h-10 bg-slate-800/50 rounded-xl flex items-center justify-center"><i data-lucide="${getMoodIcon(h.mood)}" class="w-5 h-5 text-indigo-400"></i></div>` : ''}
+                                    </div>
+                                    ${h.notes ? `<p class="text-sm text-slate-400 border-l-2 border-indigo-500/30 pl-3 py-1 italic">"${escapeHtml(h.notes)}"</p>` : ''}
+                                    <div class="flex flex-wrap gap-2 mt-3">
+                                        ${h.quickEntry && h.type ? `<span class="px-2 py-1 bg-indigo-500/10 text-indigo-400 text-[8px] font-black uppercase rounded-full">${escapeHtml(h.type)}</span>` : ''}
+                                        ${h.status === 'pos' ? '<span class="px-2 py-1 bg-emerald-500/10 text-emerald-500 text-[8px] font-black uppercase rounded-full">Win</span>' : ''}
+                                        ${h.status === 'neg' ? '<span class="px-2 py-1 bg-rose-500/10 text-rose-500 text-[8px] font-black uppercase rounded-full">Struggle</span>' : ''}
+                                    </div>
+                                </div>
+                            `).join('')}
+                    </div>
+
+                    ${state.history.length > 0 ? `
+                    <div class="mt-16 pt-8 border-t border-slate-900 flex justify-center">
+                        <button id="clear-history-btn" class="text-[9px] font-black text-slate-700 hover:text-rose-500 uppercase tracking-widest transition-colors">
+                            Clear History
+                        </button>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        function getMoodIcon(moodName) {
+            const mood = state.settings.moods.find(m => m.name === moodName);
+            return mood ? mood.icon : 'circle';
+        }
+
+        function renderSettings() {
+            const tabs = [
+                { id: 'general', label: 'General', icon: 'sliders' },
+                { id: 'skills', label: 'Skills', icon: 'grid' },
+                { id: 'moods', label: 'Moods', icon: 'smile' },
+                { id: 'phases', label: 'Deep Dive', icon: 'list' },
+                { id: 'hotkeys', label: 'Hotkeys', icon: 'keyboard' },
+                { id: 'achievements', label: 'Achievements', icon: 'trophy' },
+                { id: 'data', label: 'Data', icon: 'database' }
+            ];
+
+            return `
+                <div class="max-w-4xl mx-auto">
+                    <div class="flex items-center justify-between mb-8">
+                        <h2 class="text-3xl font-black italic uppercase text-white tracking-tight">Settings</h2>
+                        <button id="close-settings-btn" class="p-3 hover:bg-slate-800 rounded-full text-slate-500" onclick="setState({ view: 'dashboard' })">
+                            <i data-lucide="x" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+
+                    <div class="flex gap-2 mb-8 overflow-x-auto pb-2">
+                        ${tabs.map(t => `
+                            <button data-settings-tab="${t.id}" class="flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap transition-all ${state.settingsTab === t.id ? 'bg-indigo-600 text-white settings-tab-active' : 'bg-slate-800 text-slate-400 hover:text-white hover:scale-[1.02]'}">
+                                <i data-lucide="${t.icon}" class="w-4 h-4"></i>
+                                ${t.label}
+                            </button>
+                        `).join('')}
+                    </div>
+
+                    ${state.settingsTab === 'general' ? renderGeneralSettings() : ''}
+                    ${state.settingsTab === 'skills' ? renderSkillsSettings() : ''}
+                    ${state.settingsTab === 'moods' ? renderMoodsSettings() : ''}
+                    ${state.settingsTab === 'phases' ? renderPhasesSettings() : ''}
+                    ${state.settingsTab === 'hotkeys' ? renderHotkeysSettings() : ''}
+                    ${state.settingsTab === 'achievements' ? renderAchievementsSettings() : ''}
+                    ${state.settingsTab === 'data' ? renderDataSettings() : ''}
+                </div>
+            `;
+        }
+
+        function renderGeneralSettings() {
+            return `
+                <div class="settings-section">
+                    <h3>App Title</h3>
+                    <input id="app-title-input" type="text" value="${escapeHtml(state.settings.appTitle)}"
+                        class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white font-bold focus:border-indigo-500 outline-none">
+                </div>
+
+                <div class="settings-section">
+                    <h3>UI Size</h3>
+                    <div class="flex gap-3">
+                        ${['small', 'medium', 'large'].map(size => `
+                            <button data-size="${size}" class="flex-1 py-3 rounded-xl font-bold uppercase text-sm transition-all ${state.settings.uiSize === size ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}">
+                                ${size}
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3>Theme</h3>
+                    <p class="text-slate-500 text-sm mb-4">Switch between dark mode and a warm, easy-on-the-eyes light mode.</p>
+                    <button id="toggle-light-mode" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${state.settings.lightMode ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'}">
+                        <i data-lucide="${state.settings.lightMode ? 'sun' : 'moon'}" class="w-5 h-5"></i>
+                        <span class="font-bold text-sm">${state.settings.lightMode ? 'Light Mode' : 'Dark Mode'}</span>
+                    </button>
+                </div>
+
+                <div class="settings-section">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="mb-0">Timer Presets</h3>
+                        <button id="add-timer-preset-btn" class="flex items-center gap-2 px-3 py-2 bg-indigo-600 text-white rounded-lg font-bold text-xs uppercase hover:bg-indigo-500 transition-all">
+                            <i data-lucide="plus" class="w-4 h-4"></i> Add
+                        </button>
+                    </div>
+                    <div class="space-y-3">
+                        ${state.settings.timerPresets.map(preset => `
+                            <div class="flex items-center gap-3 bg-slate-900 p-3 rounded-xl">
+                                <input data-timer-label data-timer-id="${preset.id}" type="text" value="${escapeHtml(preset.label)}"
+                                    class="w-20 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white font-medium text-center focus:border-indigo-500 outline-none"
+                                    placeholder="Label">
+                                <input data-timer-seconds data-timer-id="${preset.id}" type="number" value="${preset.seconds}"
+                                    class="w-24 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white font-medium text-center focus:border-indigo-500 outline-none"
+                                    min="10" max="3600" placeholder="Seconds">
+                                <span class="text-slate-500 text-sm">seconds</span>
+                                <button data-delete-timer-preset="${preset.id}" class="p-2 text-slate-500 hover:text-rose-500 transition-colors ml-auto">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderSkillsSettings() {
+            return `
+                <div class="settings-section">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="mb-0">Quick Log Skills</h3>
+                        <button id="add-skill-btn" class="flex items-center gap-2 px-3 py-2 bg-indigo-600 text-white rounded-lg font-bold text-xs uppercase hover:bg-indigo-500 transition-all">
+                            <i data-lucide="plus" class="w-4 h-4"></i> Add
+                        </button>
+                    </div>
+                    <p class="text-slate-500 text-sm mb-4">These appear as quick-log cards on the dashboard.</p>
+
+                    <div class="space-y-3">
+                        ${state.settings.skills.map(skill => `
+                            <div class="flex items-center gap-3 bg-slate-900 p-3 rounded-xl">
+                                <button data-open-icon-picker data-icon-type="skill" data-icon-target-id="${skill.id}"
+                                    class="w-12 h-12 bg-slate-800 border border-slate-700 rounded-lg flex items-center justify-center hover:border-indigo-500 transition-colors"
+                                    title="Click to change icon">
+                                    <i data-lucide="${escapeHtml(skill.icon)}" class="w-6 h-6 text-indigo-400"></i>
+                                </button>
+                                <input data-skill-name data-skill-id="${skill.id}" type="text" value="${escapeHtml(skill.name)}"
+                                    class="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white font-medium focus:border-indigo-500 outline-none">
+                                <button data-delete-skill="${skill.id}" class="p-2 text-slate-500 hover:text-rose-500 transition-colors">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderMoodsSettings() {
+            return `
+                <div class="settings-section">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="mb-0">Mood Options</h3>
+                        <button id="add-mood-btn" class="flex items-center gap-2 px-3 py-2 bg-indigo-600 text-white rounded-lg font-bold text-xs uppercase hover:bg-indigo-500 transition-all">
+                            <i data-lucide="plus" class="w-4 h-4"></i> Add
+                        </button>
+                    </div>
+                    <p class="text-slate-500 text-sm mb-4">These appear in the first phase of the deep dive.</p>
+
+                    <div class="space-y-3">
+                        ${state.settings.moods.map(mood => `
+                            <div class="flex items-center gap-3 bg-slate-900 p-3 rounded-xl">
+                                <button data-open-icon-picker data-icon-type="mood" data-icon-target-id="${mood.id}"
+                                    class="w-12 h-12 bg-slate-800 border border-slate-700 rounded-lg flex items-center justify-center hover:border-indigo-500 transition-colors"
+                                    title="Click to change icon">
+                                    <i data-lucide="${escapeHtml(mood.icon)}" class="w-6 h-6 text-indigo-400"></i>
+                                </button>
+                                <input data-mood-label data-mood-id="${mood.id}" type="text" value="${escapeHtml(mood.label)}"
+                                    class="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white font-medium focus:border-indigo-500 outline-none">
+                                <button data-delete-mood="${mood.id}" class="p-2 text-slate-500 hover:text-rose-500 transition-colors">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderPhasesSettings() {
+            return `
+                <div class="settings-section">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="mb-0">Deep Dive Phases</h3>
+                        <button id="add-phase-btn" class="flex items-center gap-2 px-3 py-2 bg-indigo-600 text-white rounded-lg font-bold text-xs uppercase hover:bg-indigo-500 transition-all">
+                            <i data-lucide="plus" class="w-4 h-4"></i> Add Phase
+                        </button>
+                    </div>
+                    <p class="text-slate-500 text-sm mb-4">Configure the steps in structured session entry.</p>
+
+                    <div class="space-y-4">
+                        ${state.settings.sessionPhases.map((phase, idx) => `
+                            <div class="bg-slate-900 rounded-xl p-4">
+                                <div class="flex items-center gap-3 mb-3">
+                                    <div class="flex flex-col gap-1">
+                                        <button data-move-phase-up="${phase.id}" class="p-1 text-slate-500 hover:text-white ${idx === 0 ? 'opacity-30' : ''}">
+                                            <i data-lucide="chevron-up" class="w-4 h-4"></i>
+                                        </button>
+                                        <button data-move-phase-down="${phase.id}" class="p-1 text-slate-500 hover:text-white ${idx === state.settings.sessionPhases.length - 1 ? 'opacity-30' : ''}">
+                                            <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                                        </button>
+                                    </div>
+                                    <div class="flex-1">
+                                        <input data-phase-title data-phase-id="${phase.id}" type="text" value="${escapeHtml(phase.title)}"
+                                            class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white font-bold focus:border-indigo-500 outline-none">
+                                    </div>
+                                    <span class="px-2 py-1 bg-slate-800 text-slate-400 rounded text-[10px] font-bold uppercase">${phase.type}</span>
+                                    <button data-delete-phase="${phase.id}" class="p-2 text-slate-500 hover:text-rose-500 transition-colors">
+                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
+
+                                ${phase.type === 'toggles' ? `
+                                    <div class="ml-8 space-y-2">
+                                        <p class="text-[10px] font-bold text-slate-500 uppercase mb-2">Questions/Toggles</p>
+                                        ${(phase.toggles || []).map(t => `
+                                            <div class="flex items-center gap-2">
+                                                <input data-toggle-label data-phase-id="${phase.id}" data-toggle-id="${t.id}" type="text" value="${escapeHtml(t.label)}"
+                                                    class="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:border-indigo-500 outline-none">
+                                                <button data-delete-toggle="${t.id}" data-phase-id="${phase.id}" class="p-2 text-slate-500 hover:text-rose-500">
+                                                    <i data-lucide="x" class="w-4 h-4"></i>
+                                                </button>
+                                            </div>
+                                        `).join('')}
+                                        <button data-add-toggle="${phase.id}" class="text-indigo-400 hover:text-indigo-300 text-xs font-bold flex items-center gap-1 mt-2">
+                                            <i data-lucide="plus" class="w-3 h-3"></i> Add Question
+                                        </button>
+                                    </div>
+                                ` : ''}
+
+                                ${phase.type === 'mood-arousal' ? `
+                                    <p class="ml-8 text-slate-500 text-xs">Shows mood selection and intensity slider</p>
+                                ` : ''}
+
+                                ${phase.type === 'notes-rating' ? `
+                                    <p class="ml-8 text-slate-500 text-xs">Shows rating scale (${phase.ratingMin}-${phase.ratingMax}) and notes field</p>
+                                ` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderHotkeysSettings() {
+            const globalHotkeys = [
+                { key: 'T', action: 'Toggle timer' },
+                { key: 'A', action: 'Toggle archive view' },
+                { key: 'S', action: 'Toggle settings' },
+                { key: 'Ctrl+Z', action: 'Undo last entry' },
+                { key: 'Esc', action: 'Close/return to dashboard' }
+            ];
+
+            const dashboardHotkeys = [
+                { key: 'D', action: 'Start Deep Dive' },
+                { key: '1-9', action: 'Quick log WIN for skill 1-9' },
+                { key: 'Shift+1-9', action: 'Quick log STRUGGLE for skill 1-9' }
+            ];
+
+            const deepDiveHotkeys = [
+                { key: '←', action: 'Previous step' },
+                { key: '→ / Enter', action: 'Next step / Save' },
+                { key: '1-9', action: 'Select mood/toggle option' },
+                { key: '↑ / ↓', action: 'Adjust intensity slider' }
+            ];
+
+            const settingsHotkeys = [
+                { key: '1-7', action: 'Switch between tabs' }
+            ];
+
+            const renderHotkeyTable = (hotkeys) => hotkeys.map(h => `
+                <div class="flex items-center justify-between py-2 border-b border-slate-800 last:border-0">
+                    <span class="text-slate-400 text-sm">${escapeHtml(h.action)}</span>
+                    <kbd class="px-2 py-1 bg-slate-800 text-indigo-400 text-xs font-mono font-bold rounded">${escapeHtml(h.key)}</kbd>
+                </div>
+            `).join('');
+
+            const hotkeysEnabled = state.settings.hotkeysEnabled !== false;
+
+            return `
+                <div class="settings-section">
+                    <h3>Enable Hotkeys</h3>
+                    <p class="text-slate-500 text-sm mb-4">Turn keyboard shortcuts on or off entirely.</p>
+                    <button id="toggle-hotkeys-enabled" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${hotkeysEnabled ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'}">
+                        <div class="w-10 h-6 rounded-full relative transition-all ${hotkeysEnabled ? 'bg-indigo-400' : 'bg-slate-700'}">
+                            <div class="absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${hotkeysEnabled ? 'left-5' : 'left-1'}"></div>
+                        </div>
+                        <span class="font-bold text-sm">${hotkeysEnabled ? 'Hotkeys Enabled' : 'Hotkeys Disabled'}</span>
+                    </button>
+                </div>
+
+                <div class="settings-section ${!hotkeysEnabled ? 'opacity-50 pointer-events-none' : ''}">
+                    <h3>Show Hotkey Hints</h3>
+                    <p class="text-slate-500 text-sm mb-4">Display keyboard shortcut badges on buttons throughout the app.</p>
+                    <button id="toggle-hotkey-hints" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${state.settings.showHotkeyHints ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'}">
+                        <div class="w-10 h-6 rounded-full relative transition-all ${state.settings.showHotkeyHints ? 'bg-indigo-400' : 'bg-slate-700'}">
+                            <div class="absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${state.settings.showHotkeyHints ? 'left-5' : 'left-1'}"></div>
+                        </div>
+                        <span class="font-bold text-sm">${state.settings.showHotkeyHints ? 'Hints Enabled' : 'Hints Disabled'}</span>
+                    </button>
+                </div>
+
+                <div class="settings-section ${!hotkeysEnabled ? 'opacity-50' : ''}">
+                    <h3>Global Hotkeys</h3>
+                    <p class="text-slate-500 text-sm mb-3">Work in all views</p>
+                    ${renderHotkeyTable(globalHotkeys)}
+                </div>
+
+                <div class="settings-section ${!hotkeysEnabled ? 'opacity-50' : ''}">
+                    <h3>Dashboard Hotkeys</h3>
+                    ${renderHotkeyTable(dashboardHotkeys)}
+                </div>
+
+                <div class="settings-section ${!hotkeysEnabled ? 'opacity-50' : ''}">
+                    <h3>Deep Dive Hotkeys</h3>
+                    ${renderHotkeyTable(deepDiveHotkeys)}
+                </div>
+
+                <div class="settings-section ${!hotkeysEnabled ? 'opacity-50' : ''}">
+                    <h3>Settings Hotkeys</h3>
+                    ${renderHotkeyTable(settingsHotkeys)}
+                </div>
+            `;
+        }
+
+        function renderAchievementsSettings() {
+            const achievements = loadAchievements();
+            const unlocked = achievements.unlocked || [];
+            const totalAchievements = ACHIEVEMENTS.length;
+            const unlockedCount = unlocked.length;
+            const percentage = Math.round((unlockedCount / totalAchievements) * 100);
+
+            const categories = [
+                { id: 'getting-started', name: 'Getting Started', icon: 'play' },
+                { id: 'consistency', name: 'Consistency', icon: 'flame' },
+                { id: 'wins', name: 'Wins', icon: 'trophy' },
+                { id: 'reflection', name: 'Reflection', icon: 'brain' },
+                { id: 'explorer', name: 'Explorer', icon: 'compass' },
+                { id: 'special', name: 'Special', icon: 'star' }
+            ];
+
+            const streak = calculateStreak();
+
+            return `
+                <div class="settings-section">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="mb-0">Progress</h3>
+                        <div class="text-right">
+                            <span class="text-2xl font-black text-amber-400">${unlockedCount}</span>
+                            <span class="text-slate-500">/ ${totalAchievements}</span>
+                        </div>
+                    </div>
+                    <div class="w-full bg-slate-800 rounded-full h-3 mb-4">
+                        <div class="bg-gradient-to-r from-amber-500 to-orange-500 h-3 rounded-full transition-all" style="width: ${percentage}%"></div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-slate-900 rounded-xl p-4 text-center">
+                            <div class="text-3xl font-black text-amber-400">${streak}</div>
+                            <div class="text-[10px] font-bold text-slate-500 uppercase">Day Streak</div>
+                        </div>
+                        <div class="bg-slate-900 rounded-xl p-4 text-center">
+                            <div class="text-3xl font-black text-indigo-400">${percentage}%</div>
+                            <div class="text-[10px] font-bold text-slate-500 uppercase">Complete</div>
+                        </div>
+                    </div>
+                </div>
+
+                ${categories.map(cat => {
+                    const catAchievements = ACHIEVEMENTS.filter(a => a.category === cat.id);
+                    const catUnlocked = catAchievements.filter(a => unlocked.includes(a.id)).length;
+
+                    return `
+                        <div class="settings-section">
+                            <div class="flex items-center gap-2 mb-4">
+                                <i data-lucide="${cat.icon}" class="w-4 h-4 text-amber-400"></i>
+                                <h3 class="mb-0">${cat.name}</h3>
+                                <span class="ml-auto text-sm text-slate-500">${catUnlocked}/${catAchievements.length}</span>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                ${catAchievements.map(a => {
+                                    const isUnlocked = unlocked.includes(a.id);
+                                    const unlockedDate = achievements[a.id + '_date'];
+                                    return `
+                                        <div class="flex items-center gap-3 p-3 rounded-xl ${isUnlocked ? 'bg-amber-500/10 border border-amber-500/30' : 'bg-slate-900/50 border border-slate-800'}">
+                                            <div class="w-10 h-10 rounded-xl flex items-center justify-center ${isUnlocked ? 'bg-amber-500/20' : 'bg-slate-800'}">
+                                                <i data-lucide="${isUnlocked ? a.icon : 'lock'}" class="w-5 h-5 ${isUnlocked ? 'text-amber-400' : 'text-slate-600'}"></i>
+                                            </div>
+                                            <div class="flex-1 min-w-0">
+                                                <div class="font-bold text-sm ${isUnlocked ? 'text-white' : 'text-slate-500'}">${escapeHtml(a.name)}</div>
+                                                <div class="text-[10px] ${isUnlocked ? 'text-amber-400/70' : 'text-slate-600'} truncate">${escapeHtml(a.description)}</div>
+                                            </div>
+                                            ${isUnlocked && unlockedDate ? `<div class="text-[9px] text-slate-500">${new Date(unlockedDate).toLocaleDateString()}</div>` : ''}
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            `;
+        }
+
+        function renderDataSettings() {
+            return `
+                <div class="settings-section">
+                    <h3>Import / Export</h3>
+                    <p class="text-slate-500 text-sm mb-4">Backup includes all settings and history.</p>
+                    <div class="flex gap-3 flex-wrap">
+                        <button id="export-json-btn" class="flex items-center gap-2 px-4 py-2 bg-white text-slate-950 rounded-xl font-bold text-sm hover:scale-105 transition-all">
+                            <i data-lucide="download" class="w-4 h-4"></i> Export Backup
+                        </button>
+                        <label class="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl font-bold text-sm cursor-pointer hover:bg-indigo-500 transition-all">
+                            <i data-lucide="upload" class="w-4 h-4"></i> Import Backup
+                            <input id="import-input" type="file" accept=".json" class="hidden">
+                        </label>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3>Reset</h3>
+                    <div class="flex gap-3 flex-wrap">
+                        <button id="reset-defaults-btn" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl font-bold text-sm hover:bg-slate-700 transition-all">
+                            Reset Settings to Defaults
+                        </button>
+                        <button id="clear-all-btn" class="px-4 py-2 bg-rose-600/20 text-rose-400 rounded-xl font-bold text-sm hover:bg-rose-600/30 transition-all">
+                            Delete All Data
+                        </button>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3>Statistics</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-slate-900 rounded-xl p-4 text-center">
+                            <div class="text-3xl font-black text-indigo-400">${state.history.length}</div>
+                            <div class="text-[10px] font-bold text-slate-500 uppercase">Total Entries</div>
+                        </div>
+                        <div class="bg-slate-900 rounded-xl p-4 text-center">
+                            <div class="text-3xl font-black text-emerald-400">${state.history.filter(h => h.status === 'pos').length}</div>
+                            <div class="text-[10px] font-bold text-slate-500 uppercase">Wins</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ===========================================
+        // HOTKEY SUPPORT
+        // ===========================================
+
+        function handleHotkeys(e) {
+            // Check if hotkeys are fully disabled
+            if (state.settings.hotkeysEnabled === false) {
+                // Still allow Escape to work even when hotkeys are disabled
+                if (e.key === 'Escape') {
+                    if (document.getElementById('icon-picker-modal')?.classList.contains('flex')) {
+                        e.preventDefault();
+                        closeIconPicker();
+                    } else if (!document.getElementById('quick-comment-popup')?.classList.contains('hidden')) {
+                        e.preventDefault();
+                        skipQuickComment();
+                    }
+                }
+                return;
+            }
+
+            // Don't trigger hotkeys when typing in inputs
+            const activeEl = document.activeElement;
+            const isTyping = activeEl && (
+                activeEl.tagName === 'INPUT' ||
+                activeEl.tagName === 'TEXTAREA' ||
+                activeEl.isContentEditable ||
+                activeEl.closest('[contenteditable="true"]')
+            );
+
+            // Always allow Escape (even when typing)
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                // Blur any focused input first
+                if (isTyping) {
+                    activeEl.blur();
+                    return;
+                }
+                // Close dropdowns and modals in order of priority
+                if (state.timerDropdownOpen) {
+                    setState({ timerDropdownOpen: false });
+                } else if (document.getElementById('icon-picker-modal')?.classList.contains('flex')) {
+                    closeIconPicker();
+                } else if (!document.getElementById('quick-comment-popup')?.classList.contains('hidden')) {
+                    skipQuickComment();
+                } else if (state.view !== 'dashboard') {
+                    setState({ view: 'dashboard' });
+                }
+                return;
+            }
+
+            // Skip ALL other hotkeys if typing in any text field
+            if (isTyping) return;
+
+            // Track hotkey usage for achievement
+            trackAchievementStat('hotkeyUsed');
+
+            // Global hotkeys (work in all views)
+            if (e.key === 't' || e.key === 'T') {
+                e.preventDefault();
+                toggleTimer();
+                return;
+            }
+
+            if (e.key === 'a' || e.key === 'A') {
+                e.preventDefault();
+                setState({ view: state.view === 'history' ? 'dashboard' : 'history' });
+                return;
+            }
+
+            if (e.key === 's' || e.key === 'S') {
+                e.preventDefault();
+                setState({ view: state.view === 'settings' ? 'dashboard' : 'settings' });
+                return;
+            }
+
+            if (e.key === 'z' && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                undoLastAction();
+                return;
+            }
+
+            // Dashboard hotkeys
+            if (state.view === 'dashboard') {
+                // D for Deep Dive
+                if (e.key === 'd' || e.key === 'D') {
+                    e.preventDefault();
+                    setState({ view: 'entry', step: 0 });
+                    return;
+                }
+
+                // Number keys 1-9 for skills (+ for positive, - modifier for negative)
+                const numKey = parseInt(e.key);
+                if (numKey >= 1 && numKey <= 9) {
+                    const skillIndex = numKey - 1;
+                    if (skillIndex < state.settings.skills.length) {
+                        e.preventDefault();
+                        const skill = state.settings.skills[skillIndex];
+                        // Shift = negative/struggle, no shift = positive/win
+                        const status = e.shiftKey ? 'neg' : 'pos';
+                        // Find the button for animation
+                        const buttons = document.querySelectorAll('[data-quicklog]');
+                        const btn = Array.from(buttons).find(b =>
+                            b.dataset.skill === skill.name && b.dataset.status === status
+                        );
+                        quickLog(skill.name, status, btn);
+                    }
+                    return;
+                }
+            }
+
+            // Entry (Deep Dive) hotkeys
+            if (state.view === 'entry') {
+                const phases = state.settings.sessionPhases;
+                const phase = phases[state.step];
+
+                // Arrow keys for navigation
+                if (e.key === 'ArrowRight' || e.key === 'Enter') {
+                    if (e.key === 'Enter' && activeEl?.tagName === 'BUTTON') return; // Let button handle it
+                    e.preventDefault();
+                    if (state.step === phases.length - 1) {
+                        saveEntry();
+                    } else {
+                        setState({ step: state.step + 1 });
+                    }
+                    return;
+                }
+
+                if (e.key === 'ArrowLeft' && state.step > 0) {
+                    e.preventDefault();
+                    setState({ step: state.step - 1 });
+                    return;
+                }
+
+                // Number keys for mood selection and ratings
+                if (phase?.type === 'mood-arousal') {
+                    const moodNum = parseInt(e.key);
+                    if (moodNum >= 1 && moodNum <= state.settings.moods.length) {
+                        e.preventDefault();
+                        const mood = state.settings.moods[moodNum - 1];
+                        updateSession({ mood: mood.name });
+                        return;
+                    }
+                    // Up/Down for arousal
+                    if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        const max = phase.arousalMax || 5;
+                        updateSession({ arousal: Math.min(state.currentSession.arousal + 1, max) });
+                        return;
+                    }
+                    if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        const min = phase.arousalMin || 1;
+                        updateSession({ arousal: Math.max(state.currentSession.arousal - 1, min) });
+                        return;
+                    }
+                }
+
+                if (phase?.type === 'toggles') {
+                    const toggleNum = parseInt(e.key);
+                    if (toggleNum >= 1 && toggleNum <= (phase.toggles?.length || 0)) {
+                        e.preventDefault();
+                        const toggle = phase.toggles[toggleNum - 1];
+                        const newToggles = { ...state.currentSession.toggles, [toggle.key]: !state.currentSession.toggles[toggle.key] };
+                        updateSession({ toggles: newToggles });
+                        return;
+                    }
+                }
+
+                if (phase?.type === 'notes-rating') {
+                    const ratingNum = parseInt(e.key);
+                    const min = phase.ratingMin || 0;
+                    const max = phase.ratingMax || 3;
+                    if (ratingNum >= min && ratingNum <= max) {
+                        e.preventDefault();
+                        updateSession({ rating: ratingNum });
+                        return;
+                    }
+                }
+            }
+
+            // Settings hotkeys
+            if (state.view === 'settings') {
+                const tabs = ['general', 'skills', 'moods', 'phases', 'hotkeys', 'achievements', 'data'];
+                const numKey = parseInt(e.key);
+                if (numKey >= 1 && numKey <= tabs.length) {
+                    e.preventDefault();
+                    setState({ settingsTab: tabs[numKey - 1] });
+                    return;
+                }
+            }
+        }
+
+        // ===========================================
+        // INIT
+        // ===========================================
+
+        render();
+        window.addEventListener('resize', debounce(render, 250));
+        window.addEventListener('beforeunload', () => { if (timerInterval) clearInterval(timerInterval); });
+        window.addEventListener('keydown', handleHotkeys);
+
+        // Icon picker modal events
+        document.getElementById('close-icon-picker')?.addEventListener('click', closeIconPicker);
+        document.getElementById('icon-picker-modal')?.addEventListener('click', (e) => {
+            if (e.target.id === 'icon-picker-modal') closeIconPicker();
+        });
+
+        // Quick comment popup events
+        document.getElementById('close-comment-popup')?.addEventListener('click', skipQuickComment);
+        document.getElementById('save-comment-btn')?.addEventListener('click', saveQuickComment);
+    </script>
+</body>
+</html>
