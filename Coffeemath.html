@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Daily Grind Cafe - Math Worksheet</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Source Sans Pro', sans-serif;
+            background-color: #FDFBF7;
+            color: #2D3748;
+        }
+        h1, h2, h3, .serif {
+            font-family: 'Playfair Display', serif;
+        }
+        
+        /* Print Styles */
+        @media print {
+            body {
+                background-color: white;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .print-border {
+                border: none !important;
+                box-shadow: none !important;
+                margin: 0 !important;
+                padding: 1rem !important;
+                max-width: 100% !important;
+            }
+            .page-break {
+                page-break-before: always;
+            }
+            .step-box {
+                border-color: #CBD5E1 !important;
+                background-color: #FAFAFA !important;
+            }
+        }
+
+        .step-box {
+            border: 2px dashed #CBD5E1;
+            min-height: 180px; /* Increased height for handwritten math and formulas */
+            border-radius: 0.5rem;
+            position: relative;
+            background-color: #F8FAFC;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .answer-box {
+            border: 2px solid #B45309; /* Amber 700 */
+            background-color: white;
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen pb-12">
+
+    <!-- Print Controls -->
+    <div class="no-print bg-slate-800 text-slate-50 p-4 flex justify-between items-center shadow-md sticky top-0 z-50">
+        <div>
+            <h1 class="text-xl font-bold serif">Worksheet Preview</h1>
+            <p class="text-sm opacity-80">Estimated time: 25-30 minutes. Ideal for 5th-7th grade math.</p>
+        </div>
+        <button onclick="window.print()" class="bg-amber-500 text-slate-900 px-6 py-2 rounded-full font-bold hover:bg-amber-400 transition flex items-center gap-2 shadow-lg">
+            <i data-lucide="printer" class="w-5 h-5"></i> Print Worksheet
+        </button>
+    </div>
+
+    <!-- MAIN WORKSHEET PAGE -->
+    <div class="max-w-4xl mx-auto px-10 pt-10 bg-white shadow-2xl my-8 print-border rounded-xl">
+        
+        <!-- Header -->
+        <div class="flex justify-between items-end border-b-4 border-slate-800 pb-6 mb-8">
+            <div class="flex items-center gap-5">
+                <div class="bg-slate-800 p-4 rounded-full text-amber-400 shadow-md">
+                    <i data-lucide="coffee" class="w-10 h-10"></i>
+                </div>
+                <div>
+                    <h1 class="text-4xl font-bold text-slate-800 serif tracking-tight">The Daily Grind Cafe</h1>
+                    <p class="text-lg text-amber-700 italic serif mt-1">Real-World Math: Decimals & Multistep Problems</p>
+                </div>
+            </div>
+            <div class="text-right flex flex-col gap-5 w-72">
+                <div class="flex items-end border-b-2 border-slate-300">
+                    <span class="font-bold text-slate-700 mr-2 pb-1">Name:</span>
+                    <div class="flex-1 h-6"></div>
+                </div>
+                <div class="flex items-end border-b-2 border-slate-300">
+                    <span class="font-bold text-slate-700 mr-2 pb-1">Date:</span>
+                    <div class="flex-1 h-6"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- The Menu Section -->
+        <div class="bg-slate-800 text-slate-50 rounded-xl p-6 mb-8 shadow-md print-border relative overflow-hidden">
+            <!-- Decorative background icon -->
+            <i data-lucide="utensils-crossed" class="absolute -right-4 -bottom-4 w-32 h-32 text-slate-700 opacity-20"></i>
+            
+            <h2 class="text-2xl font-bold text-amber-400 mb-5 text-center serif flex justify-center items-center gap-2">
+                <i data-lucide="menu-square" class="w-6 h-6"></i> Cafe Menu
+            </h2>
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4 relative z-10">
+                <div class="bg-slate-700 bg-opacity-50 p-3 rounded-lg text-center border border-slate-600">
+                    <div class="flex justify-center mb-2 text-amber-200"><i data-lucide="cup-soda" class="w-8 h-8"></i></div>
+                    <div class="font-bold tracking-wide">Espresso</div>
+                    <div class="text-amber-400 font-semibold">$2.50</div>
+                </div>
+                <div class="bg-slate-700 bg-opacity-50 p-3 rounded-lg text-center border border-slate-600">
+                    <div class="flex justify-center mb-2 text-amber-200"><i data-lucide="coffee" class="w-8 h-8"></i></div>
+                    <div class="font-bold tracking-wide">Latte</div>
+                    <div class="text-amber-400 font-semibold">$4.25</div>
+                </div>
+                <div class="bg-slate-700 bg-opacity-50 p-3 rounded-lg text-center border border-slate-600">
+                    <div class="flex justify-center mb-2 text-amber-200">
+                        <svg aria-hidden="true" class="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17 8h1a4 4 0 1 1 0 8h-1"/>
+                            <path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/>
+                            <path d="M12 2v2"/>
+                            <path d="M8 2v2"/>
+                            <path d="M16 2v2"/>
+                            <path d="M6 8c0-2 3-3 6-3s6 1 6 3"/>
+                            <path d="M9 5c0-2 2-3 3-3s3 1 3 3"/>
+                        </svg>
+                    </div>
+                    <div class="font-bold tracking-wide">Mocha</div>
+                    <div class="text-amber-400 font-semibold">$4.75</div>
+                </div>
+                <div class="bg-slate-700 bg-opacity-50 p-3 rounded-lg text-center border border-slate-600">
+                    <div class="flex justify-center mb-2 text-amber-200"><i data-lucide="croissant" class="w-8 h-8"></i></div>
+                    <div class="font-bold tracking-wide">Croissant</div>
+                    <div class="text-amber-400 font-semibold">$3.20</div>
+                </div>
+                <div class="bg-slate-700 bg-opacity-50 p-3 rounded-lg text-center border border-slate-600">
+                    <div class="flex justify-center mb-2 text-amber-200"><i data-lucide="cake-slice" class="w-8 h-8"></i></div>
+                    <div class="font-bold tracking-wide">Muffin</div>
+                    <div class="text-amber-400 font-semibold">$2.75</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-amber-50 border-l-4 border-amber-500 p-3 mb-8 rounded-r-lg">
+            <p class="text-slate-700 font-medium"><strong>Directions:</strong> Use the menu above to solve the following problems. Show all of your work clearly inside the boxes provided for each step.</p>
+        </div>
+
+        <!-- Problem 1 -->
+        <div class="mb-10">
+            <h3 class="text-xl font-bold text-slate-800 mb-3 flex items-center gap-3">
+                <span class="bg-slate-800 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm">1</span>
+                The Breakfast Run
+            </h3>
+            <p class="text-lg mb-4 ml-11 text-slate-700">Mr. Davis orders <strong>1 Latte</strong> and <strong>2 Muffins</strong>. He hands the cashier a <strong>$20.00 bill</strong>. How much change should he receive?</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5 ml-11">
+                <div class="step-box p-3">
+                    <p class="font-bold text-sm text-slate-700 mb-1 border-b pb-1">Step A: Cost of Muffins</p>
+                    <p class="text-xs text-slate-500 mb-2">Multiply the muffin price by the quantity ordered.</p>
+                    <div class="mt-auto mb-4 flex justify-center items-center gap-2 font-mono text-slate-500 text-lg">
+                        <div class="border-b-2 border-slate-400 w-20 h-6"></div> <span class="text-slate-700">×</span> <div class="border-b-2 border-slate-400 w-12 h-6"></div> <span class="text-slate-700">=</span> <div class="border-b-2 border-slate-400 w-20 h-6"></div>
+                    </div>
+                </div>
+                <div class="step-box p-3">
+                    <p class="font-bold text-sm text-slate-700 mb-1 border-b pb-1">Step B: Total Order Cost</p>
+                    <p class="text-xs text-slate-500 mb-2">Add the Latte to your answer from Step A.</p>
+                    <div class="mt-auto mb-4 flex justify-center items-center gap-2 font-mono text-slate-500 text-lg">
+                        <div class="border-b-2 border-slate-400 w-20 h-6"></div> <span class="text-slate-700">+</span> <div class="border-b-2 border-slate-400 w-20 h-6"></div> <span class="text-slate-700">=</span> <div class="border-b-2 border-slate-400 w-20 h-6"></div>
+                    </div>
+                </div>
+                <div class="step-box answer-box p-3 relative">
+                    <p class="font-bold text-sm text-amber-800 mb-1 border-b border-amber-200 pb-1">Step C: Final Change</p>
+                    <p class="text-xs text-slate-500 mb-2">Subtract the Total from the bill given.</p>
+                    <div class="mt-auto mb-10 flex justify-center items-center gap-2 font-mono text-slate-500 text-lg">
+                        <div class="border-b-2 border-slate-400 w-20 h-6"></div> <span class="text-slate-700">-</span> <div class="border-b-2 border-slate-400 w-20 h-6"></div> <span class="text-slate-700">=</span>
+                    </div>
+                    <div class="absolute bottom-3 right-3 font-bold text-slate-800 bg-amber-100 px-3 py-1 rounded">Answer: $_______</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Problem 2 -->
+        <div class="mb-10">
+            <h3 class="text-xl font-bold text-slate-800 mb-3 flex items-center gap-3">
+                <span class="bg-slate-800 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm">2</span>
+                Splitting the Bill
+            </h3>
+            <p class="text-lg mb-4 ml-11 text-slate-700">Four friends go to the cafe. Together, they order <strong>4 Mochas</strong> and <strong>2 Croissants</strong>. They want to split the total bill equally among the <strong>friends</strong>. How much does each person pay?</p>
+            
+            <div class="grid grid-cols-2 gap-6 ml-11">
+                <div class="step-box p-4">
+                    <p class="font-bold text-sm text-slate-700 mb-1 border-b pb-1">Step A: Mochas</p>
+                    <p class="text-xs text-slate-500 mb-2">Mocha price × quantity.</p>
+                    <div class="mt-auto mb-4 flex justify-center items-center gap-2 font-mono text-slate-500 text-lg">
+                        <div class="border-b-2 border-slate-400 w-20 h-6"></div> × <div class="border-b-2 border-slate-400 w-12 h-6"></div> = <div class="border-b-2 border-slate-400 w-20 h-6"></div>
+                    </div>
+                </div>
+                <div class="step-box p-4">
+                    <p class="font-bold text-sm text-slate-700 mb-1 border-b pb-1">Step B: Croissants</p>
+                    <p class="text-xs text-slate-500 mb-2">Croissant price × quantity.</p>
+                    <div class="mt-auto mb-4 flex justify-center items-center gap-2 font-mono text-slate-500 text-lg">
+                        <div class="border-b-2 border-slate-400 w-20 h-6"></div> × <div class="border-b-2 border-slate-400 w-12 h-6"></div> = <div class="border-b-2 border-slate-400 w-20 h-6"></div>
+                    </div>
+                </div>
+                <div class="step-box p-4">
+                    <p class="font-bold text-sm text-slate-700 mb-1 border-b pb-1">Step C: Total Bill</p>
+                    <p class="text-xs text-slate-500 mb-2">Add Step A and Step B.</p>
+                    <div class="mt-auto mb-4 flex justify-center items-center gap-2 font-mono text-slate-500 text-lg">
+                        <div class="border-b-2 border-slate-400 w-20 h-6"></div> + <div class="border-b-2 border-slate-400 w-20 h-6"></div> = <div class="border-b-2 border-slate-400 w-20 h-6"></div>
+                    </div>
+                </div>
+                <div class="step-box answer-box p-4 relative">
+                    <p class="font-bold text-sm text-amber-800 mb-1 border-b border-amber-200 pb-1">Step D: Per Person</p>
+                    <p class="text-xs text-slate-500 mb-2">Divide Total by the number of friends.</p>
+                    <div class="mt-auto mb-10 flex justify-center items-center gap-2 font-mono text-slate-500 text-lg">
+                        <div class="border-b-2 border-slate-400 w-20 h-6"></div> ÷ <div class="border-b-2 border-slate-400 w-12 h-6"></div> =
+                    </div>
+                    <div class="absolute bottom-4 right-4 font-bold text-slate-800 bg-amber-100 px-3 py-1 rounded">Ans: $_______</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Problem 3 -->
+        <div class="mb-10">
+            <h3 class="text-xl font-bold text-slate-800 mb-3 flex items-center gap-3">
+                <span class="bg-slate-800 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm">3</span>
+                Weekly Budget
+            </h3>
+            <p class="text-lg mb-4 ml-11 text-slate-700">Sarah has a weekly coffee budget of <strong>$20.00</strong>. She buys an <strong>Espresso every weekday (Monday-Friday)</strong>. On Saturday, she treats herself to <strong>1 Latte</strong>. Is Sarah under or over her budget, and by how much?</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5 ml-11">
+                <div class="step-box p-3">
+                    <p class="font-bold text-sm text-slate-700 mb-1 border-b pb-1">Step A: Weekday Cost</p>
+                    <p class="text-xs text-slate-500 mb-2">Espresso price × number of weekdays.</p>
+                    <div class="mt-auto mb-4 flex justify-center items-center gap-2 font-mono text-slate-500 text-lg">
+                        <div class="border-b-2 border-slate-400 w-20 h-6"></div> <span class="text-slate-700">×</span> <div class="border-b-2 border-slate-400 w-12 h-6"></div> <span class="text-slate-700">=</span> <div class="border-b-2 border-slate-400 w-20 h-6"></div>
+                    </div>
+                </div>
+                <div class="step-box p-3">
+                    <p class="font-bold text-sm text-slate-700 mb-1 border-b pb-1">Step B: Total Weekly Cost</p>
+                    <p class="text-xs text-slate-500 mb-2">Add Saturday's drink to Step A.</p>
+                    <div class="mt-auto mb-4 flex justify-center items-center gap-2 font-mono text-slate-500 text-lg">
+                        <div class="border-b-2 border-slate-400 w-20 h-6"></div> <span class="text-slate-700">+</span> <div class="border-b-2 border-slate-400 w-20 h-6"></div> <span class="text-slate-700">=</span> <div class="border-b-2 border-slate-400 w-20 h-6"></div>
+                    </div>
+                </div>
+                <div class="step-box answer-box p-3 relative">
+                    <p class="font-bold text-sm text-amber-800 mb-1 border-b border-amber-200 pb-1">Step C: Compare</p>
+                    <p class="text-xs text-slate-500 mb-2">Find the difference from her budget.</p>
+                    <div class="mt-auto mb-10 flex justify-center items-center gap-2 font-mono text-slate-500 text-lg">
+                        <div class="border-b-2 border-slate-400 w-20 h-6"></div> <span class="text-slate-700">-</span> <div class="border-b-2 border-slate-400 w-20 h-6"></div> <span class="text-slate-700">=</span>
+                    </div>
+                    <div class="absolute bottom-9 right-3 font-bold text-slate-600 text-xs">Circle: <span class="border border-slate-400 bg-white rounded px-1">OVER</span> / <span class="border border-slate-400 bg-white rounded px-1">UNDER</span></div>
+                    <div class="absolute bottom-2 right-3 font-bold text-slate-800 bg-amber-100 px-3 py-1 rounded text-sm">By: $_______</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Problem 4 (Challenge) -->
+        <div class="mb-6">
+            <h3 class="text-xl font-bold text-slate-800 mb-3 flex items-center gap-3">
+                <span class="bg-amber-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm"><i data-lucide="star" class="w-4 h-4"></i></span>
+                Challenge: The Teacher's Order
+            </h3>
+            <p class="text-lg mb-4 ml-11 text-slate-700">Ms. Smith buys <strong>12 Croissants</strong> and <strong>12 Lattes</strong> for a staff meeting. Because it's a large order, the cafe gives her a <strong>$10.00 discount</strong>. What is her final total after the discount?</p>
+            
+            <div class="grid grid-cols-2 gap-6 ml-11">
+                <div class="step-box p-4 h-auto min-h-[220px]">
+                    <p class="font-bold text-sm text-slate-700 mb-1 border-b pb-1">Workspace: Calculate Subtotal</p>
+                    <p class="text-xs text-slate-500 mb-4">Find the cost of the food/drinks before the discount.</p>
+                    <div class="mt-auto mb-2 flex flex-col gap-4 font-mono text-slate-500 text-sm items-center w-full">
+                        <div class="flex justify-between items-center w-full max-w-[260px]">
+                            <span class="text-slate-700">Croissants:</span> 
+                            <div class="flex items-center gap-1"><div class="border-b-2 border-slate-400 w-10 h-4 inline-block"></div> × <div class="border-b-2 border-slate-400 w-6 h-4 inline-block"></div> = <div class="border-b-2 border-slate-400 w-12 h-4 inline-block"></div></div>
+                        </div>
+                        <div class="flex justify-between items-center w-full max-w-[260px]">
+                            <span class="text-slate-700">Lattes:</span> 
+                            <div class="flex items-center gap-1"><div class="border-b-2 border-slate-400 w-10 h-4 inline-block"></div> × <div class="border-b-2 border-slate-400 w-6 h-4 inline-block"></div> = <div class="border-b-2 border-slate-400 w-12 h-4 inline-block"></div></div>
+                        </div>
+                        <div class="border-t border-slate-300 w-full max-w-[300px] text-center pt-3 mt-1 flex justify-center gap-2 items-center">
+                            <span class="text-slate-700">Subtotal:</span> <div class="border-b-2 border-slate-400 w-12 h-4 inline-block"></div> + <div class="border-b-2 border-slate-400 w-12 h-4 inline-block"></div> = <div class="border-b-2 border-slate-400 w-16 h-4 inline-block"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="step-box answer-box p-4 relative min-h-[220px]">
+                    <p class="font-bold text-sm text-amber-800 mb-1 border-b border-amber-200 pb-1">Final Total</p>
+                    <p class="text-xs text-slate-500 mb-2">Subtract the discount from the subtotal.</p>
+                    <div class="mt-auto mb-14 flex justify-center items-center gap-2 font-mono text-slate-500 text-lg">
+                        <div class="border-b-2 border-slate-400 w-24 h-6"></div> <span class="text-slate-700">-</span> <div class="border-b-2 border-slate-400 w-20 h-6"></div> <span class="text-slate-700">=</span>
+                    </div>
+                    <div class="absolute bottom-4 right-4 font-bold text-slate-800 bg-amber-100 px-4 py-2 rounded">Answer: $_______</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center text-sm text-slate-400 mt-12 pb-6 border-t border-slate-200 pt-6">
+            © 2026 Daily Grind Education | Math & Decimals Practice
+        </div>
+    </div>
+
+
+    <!-- ANSWER KEY (Forces a new page when printing) -->
+    <div class="page-break max-w-4xl mx-auto px-10 pt-10 bg-white shadow-xl mb-8 print-border rounded-xl">
+        <div class="border-b-4 border-slate-800 pb-4 mb-8 flex justify-between items-center">
+            <h1 class="text-3xl font-bold text-slate-800 serif flex items-center gap-3">
+                <i data-lucide="check-circle" class="w-8 h-8 text-green-600"></i> Answer Key
+            </h1>
+            <div class="bg-slate-800 text-white px-4 py-1 rounded font-bold tracking-widest uppercase text-sm shadow-sm">Teacher Copy</div>
+        </div>
+
+        <div class="space-y-6 pb-12">
+            <!-- Key 1 -->
+            <div class="bg-slate-50 p-6 rounded-lg border border-slate-200 shadow-sm">
+                <h3 class="font-bold text-xl text-slate-800 mb-3 border-b pb-2">1. The Breakfast Run</h3>
+                <ul class="list-none space-y-2 text-lg">
+                    <li><span class="text-slate-500 inline-block w-24">Step A:</span> $2.75 × 2 = <span class="font-semibold text-slate-800">$5.50</span></li>
+                    <li><span class="text-slate-500 inline-block w-24">Step B:</span> $4.25 + $5.50 = <span class="font-semibold text-slate-800">$9.75</span></li>
+                    <li class="pt-2"><span class="text-slate-500 inline-block w-24 font-bold">Step C:</span> $20.00 - $9.75 = <span class="text-blue-700 font-bold text-2xl bg-blue-50 px-3 py-1 rounded border border-blue-200">$10.25</span></li>
+                </ul>
+            </div>
+
+            <!-- Key 2 -->
+            <div class="bg-slate-50 p-6 rounded-lg border border-slate-200 shadow-sm">
+                <h3 class="font-bold text-xl text-slate-800 mb-3 border-b pb-2">2. Splitting the Bill</h3>
+                <ul class="list-none space-y-2 text-lg">
+                    <li><span class="text-slate-500 inline-block w-24">Step A:</span> $4.75 × 4 = <span class="font-semibold text-slate-800">$19.00</span></li>
+                    <li><span class="text-slate-500 inline-block w-24">Step B:</span> $3.20 × 2 = <span class="font-semibold text-slate-800">$6.40</span></li>
+                    <li><span class="text-slate-500 inline-block w-24">Step C:</span> $19.00 + $6.40 = <span class="font-semibold text-slate-800">$25.40</span></li>
+                    <li class="pt-2"><span class="text-slate-500 inline-block w-24 font-bold">Step D:</span> $25.40 ÷ 4 = <span class="text-blue-700 font-bold text-2xl bg-blue-50 px-3 py-1 rounded border border-blue-200">$6.35</span></li>
+                </ul>
+            </div>
+
+            <!-- Key 3 -->
+            <div class="bg-slate-50 p-6 rounded-lg border border-slate-200 shadow-sm">
+                <h3 class="font-bold text-xl text-slate-800 mb-3 border-b pb-2">3. Weekly Budget</h3>
+                <ul class="list-none space-y-2 text-lg">
+                    <li><span class="text-slate-500 inline-block w-24">Step A:</span> $2.50 × 5 = <span class="font-semibold text-slate-800">$12.50</span></li>
+                    <li><span class="text-slate-500 inline-block w-24">Step B:</span> $12.50 + $4.25 = <span class="font-semibold text-slate-800">$16.75</span></li>
+                    <li><span class="text-slate-500 inline-block w-24">Step C:</span> $20.00 - $16.75 = <span class="font-semibold text-slate-800">$3.25</span></li>
+                    <li class="pt-2"><span class="text-slate-500 inline-block w-24 font-bold">Answer:</span> <span class="text-blue-700 font-bold text-2xl bg-blue-50 px-3 py-1 rounded border border-blue-200">UNDER budget by $3.25</span></li>
+                </ul>
+            </div>
+
+            <!-- Key 4 -->
+            <div class="bg-amber-50 p-6 rounded-lg border border-amber-200 shadow-sm">
+                <h3 class="font-bold text-xl text-amber-900 mb-3 border-b border-amber-300 pb-2 flex items-center gap-2">
+                    <i data-lucide="star" class="w-5 h-5"></i> 4. Challenge: The Teacher's Order
+                </h3>
+                <ul class="list-none space-y-2 text-lg">
+                    <li><span class="text-amber-700 inline-block w-32">Croissants:</span> 12 × $3.20 = <span class="font-semibold text-slate-800">$38.40</span></li>
+                    <li><span class="text-amber-700 inline-block w-32">Lattes:</span> 12 × $4.25 = <span class="font-semibold text-slate-800">$51.00</span></li>
+                    <li><span class="text-amber-700 inline-block w-32">Subtotal:</span> $38.40 + $51.00 = <span class="font-semibold text-slate-800">$89.40</span></li>
+                    <li class="pt-2"><span class="text-amber-900 inline-block w-32 font-bold">Final Total:</span> $89.40 - $10.00 = <span class="text-blue-700 font-bold text-2xl bg-blue-50 px-3 py-1 rounded border border-blue-200">$79.40</span></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Lucide Icons
+        lucide.createIcons();
+    </script>
+</body>
+</html>
